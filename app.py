@@ -2,39 +2,36 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import mysql.connector
 import random
 import re
+import os
 from reportlab.pdfgen import canvas
 from flask import send_file
 import io
-from flask_mail import Mail, Message 
+from flask_mail import Mail, Message
 
 app = Flask(__name__)
 app.secret_key = "emrs_secret_key_2026"
 
 
 # ================= MAIL CONFIGURATION ================= #
-
 app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 587
 app.config["MAIL_USE_TLS"] = True
 app.config["MAIL_USERNAME"] = "dharshaaa7@gmail.com"
-app.config["MAIL_PASSWORD"] = "auro xawu hozz qsnm"
+app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
 
 mail = Mail(app)
 print(app.config["MAIL_SERVER"])
 
 # ================= DATABASE CONNECTION ================= #
 
-db = mysql.connector.connect(
-    host="localhost",
-    port=3307,
-    user="root",
-    password="emrs@1502",
-    database="emrs"
-)
+app.config["MAIL_SERVER"] = "smtp.gmail.com"
+app.config["MAIL_PORT"] = 587
+app.config["MAIL_USE_TLS"] = True
+app.config["MAIL_USERNAME"] = "dharshaaa7@gmail.com"
+app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
 
-cursor = db.cursor(dictionary=True)
-
-
+mail = Mail(app)
+print(app.config["MAIL_SERVER"])
 # ================= DATABASE CONNECTION ================= #
 db = mysql.connector.connect(
     host="localhost",
