@@ -1,0 +1,611 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* ================= RESET ================= */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+/* ================= BODY ================= */
+
+body{
+
+    min-height:100vh;
+    overflow-y:auto;
+    overflow-x:hidden;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    padding:30px 0;
+
+    background:linear-gradient(
+        -45deg,
+        #1f3b46,
+        #284954,
+        #2f5661,
+        #203a43,
+        #1f3b46
+    );
+
+    background-size:400% 400%;
+    animation:bgMove 15s ease infinite;
+
+}
+
+/* ================= BACKGROUND ANIMATION ================= */
+
+@keyframes bgMove{
+
+    0%{
+        background-position:0% 50%;
+    }
+
+    50%{
+        background-position:100% 50%;
+    }
+
+    100%{
+        background-position:0% 50%;
+    }
+
+}
+
+/* ================= CONTAINER ================= */
+
+.container{
+
+    width:100%;
+    min-height:100vh;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    position:relative;
+
+    padding:35px 0;
+
+}
+
+/* ================= FLOATING CIRCLES ================= */
+
+.circle{
+
+    position:absolute;
+    border-radius:50%;
+    filter:blur(5px);
+
+    animation:float 10s ease-in-out infinite;
+
+}
+
+.circle1{
+
+    width:260px;
+    height:260px;
+
+    background:rgba(69, 157, 192, 0.12);
+
+    top:-70px;
+    left:-60px;
+
+}
+
+.circle2{
+
+    width:180px;
+    height:180px;
+
+   background:rgba(0,255,255,.20);
+
+    right:8%;
+    bottom:8%;
+
+    animation-delay:2s;
+
+}
+
+.circle3{
+
+    width:120px;
+    height:120px;
+
+    background:rgba(255,255,255,.06);
+
+    right:22%;
+    top:10%;
+
+    animation-delay:4s;
+
+}
+
+@keyframes float{
+
+    0%,100%{
+        transform:translateY(0);
+    }
+
+    50%{
+        transform:translateY(-25px);
+    }
+
+}
+
+/* ================= REGISTER CARD ================= */
+
+.register-box{
+
+    width:480px;
+    max-width:92%;
+
+    padding:35px;
+
+    text-align:center;
+
+    background: rgba(60, 77, 86, 0.75);
+
+    backdrop-filter:blur(22px);
+
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:28px;
+
+    box-shadow:
+        0 20px 45px rgba(0,0,0,.35),
+        inset 0 0 15px rgba(255,255,255,.08);
+
+    animation:fadeUp .8s ease;
+
+    z-index:2;
+
+}
+
+@keyframes fadeUp{
+
+    from{
+        opacity:0;
+        transform:translateY(40px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+
+}
+
+/* ================= ADMIN ICON ================= */
+
+.admin-icon{
+
+    width:100px;
+    height:100px;
+
+    margin:auto;
+    margin-bottom:20px;
+
+    border-radius:50%;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    background:linear-gradient(
+        135deg,
+        #00d4ff,
+        #0066ff
+    );
+
+    color:#fff;
+
+    font-size:42px;
+
+    box-shadow:0 15px 35px rgba(0,119,255,.45);
+
+    animation:pulse 2.5s infinite;
+
+}
+
+@keyframes pulse{
+
+    0%,100%{
+        transform:scale(1);
+    }
+
+    50%{
+        transform:scale(1.08);
+    }
+
+}
+
+/* ================= HEADING ================= */
+
+.register-box h1{
+
+    color:#fff;
+
+    font-size:32px;
+
+    margin-bottom:10px;
+
+    font-weight:700;
+
+}
+
+.subtitle{
+
+    color:#eef8ff;
+
+    font-size:15px;
+
+    line-height:24px;
+
+    margin-bottom:25px;
+
+}
+
+/* ================= INPUT BOX ================= */
+
+.input-box{
+
+    position:relative;
+
+    width:100%;
+
+    margin:16px 0;
+
+}
+
+.input-box i:first-child{
+
+    position:absolute;
+
+    left:18px;
+    top:50%;
+
+    transform:translateY(-50%);
+
+    color:#0077ff;
+
+    font-size:17px;
+
+}
+
+.input-box input,
+.input-box select,
+.input-box textarea{
+
+    width:100%;
+
+    border:none;
+    outline:none;
+
+    border-radius:30px;
+
+    background:#fff;
+
+    font-size:15px;
+
+    padding:14px 18px 14px 48px;
+
+    transition:.3s;
+
+    resize:none;
+
+}
+
+.input-box textarea{
+
+    border-radius:20px;
+    min-height:90px;
+
+}
+
+.input-box input:focus,
+.input-box select:focus,
+.input-box textarea:focus{
+
+    box-shadow:0 0 0 4px rgba(37,99,235,.20);
+
+    transform:translateY(-2px);
+
+}
+/* ================= PASSWORD TOGGLE ================= */
+
+.toggle-password{
+    position: absolute;
+    top: 50%;
+    right: 32px;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    cursor: pointer;
+    color: #0077ff;
+    z-index: 100;
+}
+
+.toggle-password i{
+    font-size: 18px;
+    color: inherit;
+}
+
+.toggle-password:hover{
+    color: #00c6ff;
+}
+
+/* ================= BUTTON ================= */
+
+.register-btn{
+
+    width:100%;
+    height:54px;
+
+    border:none;
+    border-radius:50px;
+
+    cursor:pointer;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+
+    background:linear-gradient(135deg,#00c6ff,#0066ff);
+
+    color:#fff;
+
+    font-size:16px;
+    font-weight:600;
+
+    box-shadow:0 12px 28px rgba(0,119,255,.35);
+
+    transition:.35s ease;
+
+}
+
+.register-btn:hover{
+
+    transform:translateY(-4px) scale(1.02);
+
+    background:linear-gradient(135deg,#0099ff,#004dff);
+
+    box-shadow:0 18px 35px rgba(0,119,255,.45);
+
+}
+
+.register-btn i{
+    transition:.3s;
+}
+
+.register-btn:hover i{
+    transform:translateX(5px);
+}
+
+/* ================= BACK BUTTON ================= */
+
+.back{
+
+    display:block;
+
+    margin-top:22px;
+
+    color:#fff;
+
+    text-decoration:none;
+
+    font-weight:500;
+
+    transition:.3s;
+
+}
+
+.back i{
+    margin-right:8px;
+}
+
+.back:hover{
+
+    color:#7dd3fc;
+
+    letter-spacing:.5px;
+
+}
+
+/* ================= HOVER EFFECTS ================= */
+
+.register-box:hover{
+
+    transform:translateY(-6px);
+
+    transition:.4s;
+
+}
+
+.input-box input,
+.input-box select,
+.input-box textarea{
+    width:100%;
+    border:none;
+    outline:none;
+    border-radius:30px;
+    background:#fff;
+    font-size:15px;
+
+    /* left icon + right eye icon space */
+    padding:14px 50px 14px 48px;
+
+    transition:.3s;
+    resize:none;
+}
+
+.input-box input::placeholder,
+.input-box textarea::placeholder{
+
+    color:#666;
+
+}
+
+.input-box select{
+
+    appearance:none;
+    -webkit-appearance:none;
+    -moz-appearance:none;
+
+    cursor:pointer;
+
+}
+
+.input-box select option{
+    color:#222;
+}
+
+/* ================= SCROLL FIX ================= */
+
+body{
+    overflow-y:auto;
+}
+
+.container{
+    min-height:100vh;
+    padding:35px 0;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media(max-width:768px){
+
+    .register-box{
+
+        width:92%;
+
+        padding:30px 22px;
+
+    }
+
+    .admin-icon{
+
+        width:80px;
+        height:80px;
+
+        font-size:34px;
+
+    }
+
+    .register-box h1{
+
+        font-size:26px;
+
+    }
+
+    .subtitle{
+
+        font-size:14px;
+
+        line-height:22px;
+
+    }
+
+    .circle{
+
+        display:none;
+
+    }
+
+}
+
+@media(max-width:480px){
+
+    .register-box{
+
+        width:94%;
+
+        padding:25px 18px;
+
+    }
+
+    .admin-icon{
+
+        width:70px;
+        height:70px;
+
+        font-size:30px;
+
+    }
+
+    .register-box h1{
+
+        font-size:22px;
+
+    }
+
+    .input-box input,
+    .input-box select,
+    .input-box textarea{
+
+        font-size:14px;
+
+        padding:14px 45px 14px 45px;
+
+    }
+
+    .register-btn{
+
+        font-size:15px;
+
+        height:50px;
+
+    }
+
+}
+
+/* ================= CUSTOM SCROLLBAR ================= */
+
+::-webkit-scrollbar{
+    width:8px;
+}
+
+::-webkit-scrollbar-track{
+    background:#0b1f3a;
+}
+
+::-webkit-scrollbar-thumb{
+    background:#0099ff;
+    border-radius:10px;
+}
+
+::-webkit-scrollbar-thumb:hover{
+    background:#00c6ff;
+}
+
+.sidebar{
+    width: 260px;
+    height: 100vh;
+    background: #183847;
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow-y: auto;      /* Scroll enable */
+    scrollbar-width: thin; /* Firefox */
+}
+
+.menu{
+    flex: 1;
+}
+
+.logout{
+    margin-top: auto;
+    padding: 20px;
+}

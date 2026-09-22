@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Patient Dashboard | EMRS</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/patient_dashboard.css') }}">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- ================= SIDEBAR ================= -->
+
+        <div class="sidebar">
+
+            <div class="logo">
+                <i class="fa-solid fa-hospital"></i>
+                <h2>EMRS</h2>
+            </div>
+
+            <ul>
+
+                <li class="active">
+                    <a href="{{ url_for('patient_dashboard') }}">
+                        <i class="fa-solid fa-user"></i>
+                        My Profile
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{{ url_for('book_appointment') }}">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    Appointment
+                </a>
+                </li>
+                    
+                <li>
+                    <a href="{{ url_for('my_appointments') }}" class="dashboard-card">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    My Appointments
+                </a>
+                </li>
+
+                <li>
+                    <a href="#">
+                        <i class="fa-solid fa-file-medical"></i>
+                        Medical Records
+                    </a>
+                </li>
+
+                <li>
+                    <a href="#">
+                        <i class="fa-solid fa-prescription-bottle-medical"></i>
+                        Prescriptions
+                    </a>
+                </li>
+
+                <li>
+                    <a href="#">
+                        <i class="fa-solid fa-flask"></i>
+                        Lab Reports
+                    </a>
+                </li>
+
+                <li>
+                    <a href="#">
+                        <i class="fa-solid fa-gear"></i>
+                        Settings
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{{ url_for('home') }}">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        Logout
+                    </a>
+                </li>
+
+            </ul>
+
+        </div>
+
+
+        <!-- ================= MAIN CONTENT ================= -->
+
+        <div class="main-content">
+
+            <div class="header">
+
+                <div>
+                    <h1>Patient Dashboard</h1>
+
+                    <p class="sub-title">
+                        Electronic Medical Record System
+                    </p>
+                </div>
+
+                <div class="welcome">
+                    Welcome,
+                    <strong>{{ patient.full_name }}</strong>
+                </div>
+
+            </div>
+
+
+            <!-- ================= PROFILE CARD ================= -->
+
+            <div class="profile-card">
+
+                <div class="profile-left">
+
+                    <img src="{{ patient.profile_image if patient.profile_image else url_for('static', filename='images/patient.png') }}"
+                        alt="Patient">
+
+                    <h2>{{ patient.full_name }}</h2>
+
+                    <p>
+                        Patient ID :
+                        {{ patient.patient_id }}
+                    </p>
+
+                </div>
+
+
+                <div class="profile-right">
+
+                    <div class="info-box">
+                        <label>Email</label>
+                        <p>{{ patient.email }}</p>
+                    </div>
+
+                    <div class="info-box">
+                        <label>Username</label>
+                        <p>{{ patient.username }}</p>
+                    </div>
+
+                    <div class="info-box">
+                        <label>Mobile Number</label>
+                        <p>{{ patient.mobile }}</p>
+                    </div>
+
+                    <div class="info-box">
+                        <label>Date of Birth</label>
+                        <p>{{ patient.dob }}</p>
+                    </div>
+
+                    <div class="info-box">
+                        <label>Gender</label>
+                        <p>{{ patient.gender }}</p>
+                    </div>
+
+                    <div class="info-box">
+                        <label>Blood Group</label>
+                        <p>
+                            <span class="blood-badge">
+                                {{ patient.blood_group }}
+                            </span>
+                        </p>
+                    </div>
+
+                    <div class="info-box full">
+                        <label>Address</label>
+                        <p>
+                            {{ patient.house_no }}<br>
+                            {{ patient.street }}<br>
+                            {{ patient.city }},
+                            {{ patient.district }}<br>
+                            {{ patient.state }} -
+                            {{ patient.pincode }}
+                        </p>
+                    </div>
+
+                    <div class="info-box full">
+                        <label>Emergency Contact</label>
+                        <p>
+                            {{ patient.emergency_name }}<br>
+                            {{ patient.emergency_phone }}
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================= EDIT BUTTON ================= -->
+
+            <div class="action-buttons">
+
+                <a href="{{ url_for('edit_patient_profile') }}" class="edit-btn">
+                    <i class="fa-solid fa-user-pen"></i>
+                    Edit Profile
+                </a>
+
+            </div>
+
+
+            <!-- ================= DASHBOARD CARDS ================= -->
+
+            <div class="cards">
+
+                <div class="card">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <h3>Appointments</h3>
+                    <p>No Upcoming Appointments</p>
+                </div>
+
+                <div class="card">
+                    <i class="fa-solid fa-file-medical"></i>
+                    <h3>Medical Records</h3>
+                    <p>Medical History Not Available</p>
+                </div>
+
+                <div class="card">
+                    <i class="fa-solid fa-prescription-bottle-medical"></i>
+                    <h3>Prescriptions</h3>
+                    <p>No Active Prescriptions</p>
+                </div>
+
+                <div class="card">
+                    <i class="fa-solid fa-flask"></i>
+                    <h3>Lab Reports</h3>
+                    <p>No Lab Reports Uploaded</p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <footer class="footer">
+        © 2026 EMRS | Electronic Medical Record System
+    </footer>
+
+</body>
+
+</html>

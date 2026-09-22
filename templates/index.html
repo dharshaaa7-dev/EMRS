@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electronic Medical Record System</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="overlay">
+
+        <div class="glass">
+
+            <!-- Hospital Icon -->
+            <i class="fa-solid fa-hospital hospital-icon"></i>
+
+            <!-- Heading -->
+            <h1>Electronic Medical Record System</h1>
+
+            <!-- Description -->
+            <p>
+                A Secure Healthcare Platform to Manage Patient Records,
+                Medical Reports, Prescriptions and Treatment History.
+            </p>
+
+            <!-- Get Started Button -->
+            <a href="{{ url_for('login') }}" class="btn">
+                Get Started
+            <i class="fa-solid fa-arrow-right"></i>
+            </a>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+
+    <link rel="stylesheet"
+      href="{{ url_for('static', filename='css/admin_login.css') }}">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="login-box">
+
+        <i class="fa-solid fa-user-shield icon"></i>
+
+        <h1>Admin Login</h1>
+
+        <p>Welcome Administrator! Manage the Electronic Medical Record System securely.</p>
+
+        <form action="{{ url_for('admin_login') }}" method="POST">
+
+            <!-- Username or Email -->
+            <div class="input-box">
+                <i class="fa-solid fa-user"></i>
+                <input type="text"
+                       name="login_id"
+                       placeholder="Username or Email"
+                       required>
+            </div>
+
+            <!-- Password -->
+            <div class="input-box">
+                <i class="fa-solid fa-lock"></i>
+                <input type="password"
+
+                       id="password"
+                       name="password"
+                       placeholder="Password"
+                       required>
+
+                <i class="fa-solid fa-eye toggle-password"
+                   id="togglePassword"></i>
+            </div>
+
+            <div class="forgot">
+                <a href="{{ url_for('forgot_password', role='admin') }}">
+                    Forgot Password?
+                </a>
+            </div>
+      
+
+            <button type="submit" class="login-btn">
+                Login
+            </button>
+
+        </form>
+
+        <div class="register">
+            <p>New Administrator?</p>
+
+            <a href="{{ url_for('admin_register') }}">
+                Create New Account
+            </a>
+        </div>
+
+        
+        <a href="{{ url_for('login') }}" class="back">
+        <i class="fa-solid fa-arrow-left"></i>
+        Back to Login
+    </a>
+
+    </div>
+
+</div>
+
+<script>
+const password = document.getElementById("password");
+const togglePassword = document.getElementById("togglePassword");
+
+togglePassword.addEventListener("click", function () {
+
+    if (password.type === "password") {
+        password.type = "text";
+        this.classList.remove("fa-eye");
+        this.classList.add("fa-eye-slash");
+    } else {
+        password.type = "password";
+        this.classList.remove("fa-eye-slash");
+        this.classList.add("fa-eye");
+    }
+
+});
+</script>
+</body>
+</html>

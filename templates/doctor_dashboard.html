@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Doctor Dashboard | EMRS</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/doctor_dashboard.css') }}">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- ================= Sidebar ================= -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+            <i class="fa-solid fa-user-doctor"></i>
+            <h2>EMRS</h2>
+            <p>Doctor Panel</p>
+        </div>
+
+        <ul>
+
+            <li class="active">
+                <a href="#">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="#appointments">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>Appointments</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="#patients">
+                    <i class="fa-solid fa-user-group"></i>
+                    <span>Patients</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="#">
+                    <i class="fa-solid fa-file-medical"></i>
+                    <span>Prescriptions</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="#">
+                    <i class="fa-solid fa-notes-medical"></i>
+                    <span>Medical Records</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="#">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Settings</span>
+                </a>
+            </li>
+
+            <li class="logout">
+                <a href="{{ url_for('logout') }}">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Logout</span>
+                </a>
+            </li>
+
+        </ul>
+
+    </aside>
+
+    <!-- ================= Main Content ================= -->
+
+    <main class="main-content">
+
+        <!-- ================= Header ================= -->
+
+        <header class="topbar">
+
+            <div>
+                <h1>Welcome Dr. {{ session.get('doctor_name','Doctor') }} 👋</h1>
+                <p>Electronic Medical Record System</p>
+            </div>
+
+            <div class="top-right">
+
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text"
+                           placeholder="Search Patient...">
+                </div>
+
+                <div class="clock" id="clock">
+                    00:00:00
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- ================= Statistics ================= -->
+
+        <section class="stats">
+
+            <div class="card blue">
+                <i class="fa-solid fa-user-group"></i>
+
+                <h2>
+                    {{ total_patients if total_patients is defined else appointments|length }}
+                </h2>
+
+                <p>Total Patients</p>
+            </div>
+
+            <div class="card green">
+                <i class="fa-solid fa-calendar-check"></i>
+
+                <h2>
+                    {{ appointments|length }}
+                </h2>
+
+                <p>Total Appointments</p>
+            </div>
+
+            <div class="card orange">
+                <i class="fa-solid fa-hourglass-half"></i>
+
+                <h2>
+                    {{ pending_count if pending_count is defined else 0 }}
+                </h2>
+
+                <p>Pending Approval</p>
+            </div>
+
+            <div class="card purple">
+                <i class="fa-solid fa-circle-check"></i>
+
+                <h2>
+                    {{ approved_count if approved_count is defined else 0 }}
+                </h2>
+
+                <p>Approved Appointments</p>
+            </div>
+
+        </section>
+
+        <!-- ================= Doctor Profile ================= -->
+
+        <section class="doctor-info">
+
+            <div class="profile-card">
+
+                <div class="profile-image">
+                    <i class="fa-solid fa-user-doctor"></i>
+                </div>
+
+                <div class="profile-info">
+
+                    <h2>
+                        Dr. {{ session.get('doctor_name','Doctor') }}
+                    </h2>
+
+                    <p>
+                        {{ session.get('specialization','General Physician') }}
+                    </p>
+
+                    <span>
+                        Electronic Medical Record System
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+                <!-- ================= Upcoming Appointments ================= -->
+
+        <section class="upcoming-section" id="appointments">
+
+            <h2>
+                <i class="fa-solid fa-calendar-check"></i>
+                Upcoming Appointments
+            </h2>
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Appointment ID</th>
+                        <th>Patient</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                        <th>Action</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% if appointments %}
+
+                    {% for appointment in appointments %}
+
+                    <tr>
+
+                        <td>{{ appointment.appointment_id }}</td>
+
+                        <td>{{ appointment.patient_name }}</td>
+
+                        <td>{{ appointment.appointment_date }}</td>
+
+                        <td>{{ appointment.appointment_time }}</td>
+
+                        <td>
+
+                            {% if appointment.status == "Approved" %}
+
+                                <span class="approved-badge">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    Approved
+                                </span>
+
+                            {% elif appointment.status == "Rejected" %}
+
+                                <span class="rejected-badge">
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                    Rejected
+                                </span>
+
+                            {% else %}
+
+                                <span class="pending">
+                                    <i class="fa-solid fa-clock"></i>
+                                    Pending
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            {% if appointment.status == "Pending" %}
+
+                                <a href="{{ url_for('approve', id=appointment.appointment_id) }}"
+                                   class="approve-btn">
+
+                                    <i class="fa-solid fa-check"></i>
+                                    Approve
+
+                                </a>
+
+                                <a href="{{ url_for('reject', id=appointment.appointment_id) }}"
+                                   class="reject-btn">
+
+                                    <i class="fa-solid fa-xmark"></i>
+                                    Reject
+
+                                </a>
+
+                            {% elif appointment.status == "Approved" %}
+
+                                <span class="approved-badge">
+                                    Done
+                                </span>
+
+                            {% else %}
+
+                                <span class="rejected-badge">
+                                    Rejected
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <tr>
+
+                        <td colspan="6">
+
+                            <div style="padding:30px;text-align:center;">
+                                <i class="fa-solid fa-calendar-xmark"
+                                   style="font-size:45px;color:#999;"></i>
+
+                                <h3 style="margin-top:15px;">
+                                    No Appointments Found
+                                </h3>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                {% endif %}
+
+                </tbody>
+
+            </table>
+
+        </section>
+
+        <!-- ================= Footer ================= -->
+
+        <footer class="footer">
+
+            <p>
+                © 2026 EMRS - Electronic Medical Record System
+            </p>
+
+        </footer>
+
+    </main>
+
+</div>
+
+<script>
+
+function updateClock(){
+
+    const now = new Date();
+
+    document.getElementById("clock").innerHTML =
+        now.toLocaleTimeString();
+
+}
+
+setInterval(updateClock,1000);
+
+updateClock();
+
+</script>
+
+</body>
+
+</html>

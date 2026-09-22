@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Select Login</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+</head>
+
+<body>
+
+    <div class="background">
+
+        <div class="circle c1"></div>
+        <div class="circle c2"></div>
+        <div class="circle c3"></div>
+
+        <div class="login-box">
+
+            <i class="fa-solid fa-hospital hospital"></i>
+
+            <h1>Electronic Medical Record System</h1>
+
+            <p>Select Your Login Portal</p>
+
+            <div class="cards">
+
+                <!-- Patient Login -->
+                <a href="{{ url_for('patient_login') }}" class="card">
+
+                    <i class="fa-solid fa-user"></i>
+
+                    <h2>Patient Login</h2>
+
+                    <span>Access Medical Records</span>
+
+                </a>
+
+                <!-- Doctor Login -->
+                <a href="{{ url_for('doctor_login') }}" class="card">
+
+                    <i class="fa-solid fa-user-doctor"></i>
+
+                    <h2>Doctor Login</h2>
+
+                    <span>Manage Patient Details</span>
+
+                </a>
+
+                <!-- Admin Login -->
+                <a href="{{ url_for('admin_login') }}" class="card">
+
+                    <i class="fa-solid fa-user-shield"></i>
+
+                    <h2>Admin Login</h2>
+
+                    <span>System Administration</span>
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

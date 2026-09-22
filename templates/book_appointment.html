@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Book Appointment | EMRS</title>
+
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/book_appointment.css') }}">
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="appointment-box">
+
+<div class="icon">
+    <i class="fa-solid fa-calendar-check"></i>
+</div>
+
+<h1>Book Appointment</h1>
+
+<p>
+Book your appointment using Text or Voice.
+</p>
+
+<form method="POST" enctype="multipart/form-data">
+
+<!-- ================= Appointment Date ================= -->
+
+<label class="section-title">
+    <i class="fa-solid fa-calendar-days"></i>
+    Appointment Date
+</label>
+
+<div class="input-box">
+    <input
+        type="date"
+        name="appointment_date"
+        required>
+</div>
+
+<!-- ================= Appointment Time ================= -->
+
+<label class="section-title">
+    <i class="fa-solid fa-clock"></i>
+    Appointment Time
+</label>
+
+<div class="time-container">
+
+    <select name="hour" required>
+        {% for i in range(1,13) %}
+        <option value="{{'%02d'|format(i)}}">
+            {{'%02d'|format(i)}}
+        </option>
+        {% endfor %}
+    </select>
+
+    <span class="colon">:</span>
+
+    <select name="minute" required>
+        {% for i in ['00','15','30','45'] %}
+        <option value="{{i}}">
+            {{i}}
+        </option>
+        {% endfor %}
+    </select>
+
+    <select name="ampm" required>
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+    </select>
+
+</div>
+
+<!-- ================= Communication Mode ================= -->
+
+<label class="section-title">
+    <i class="fa-solid fa-comments"></i>
+    Describe Your Problem
+</label>
+
+<div class="mode-selection">
+
+    <label class="mode-card">
+
+        <input
+            type="radio"
+            name="mode"
+            value="text"
+            checked
+            onclick="showText()">
+
+        <i class="fa-solid fa-keyboard"></i>
+
+        <span>Text</span>
+
+    </label>
+
+    <label class="mode-card">
+
+        <input
+            type="radio"
+            name="mode"
+            value="voice"
+            onclick="showVoice()">
+
+        <i class="fa-solid fa-microphone"></i>
+
+        <span>Voice</span>
+
+    </label>
+
+</div>
+
+<!-- ================= TEXT ================= -->
+<!-- TEXT -->
+<div id="textBox">
+    <textarea
+        id="reason"
+        name="reason"
+        placeholder="Describe your symptoms..."
+        onkeyup="analyzeSymptoms()"></textarea>
+</div>
+
+<!-- VOICE -->
+<div id="voiceBox" style="display:none;">
+
+    <button type="button" id="startVoice">
+        🎤 Start Voice Typing
+    </button>
+
+    <p class="note">
+        Speak your symptoms. AI will convert it into text.
+    </p>
+
+    <p id="voiceStatus"></p>
+
+</div>
+
+<!-- ================= Suggested Department ================= -->
+
+<label class="section-title">
+<i class="fa-solid fa-stethoscope"></i>
+Suggested Department
+</label>
+
+<div class="input-box">
+
+<input
+type="text"
+id="department"
+name="department"
+placeholder="AI Suggested Department"
+readonly>
+
+</div>
+<!------------hpspital selection----------->
+<div class="input-box">
+    <label>Hospital</label>
+
+    <input
+        type="text"
+        id="hospital_name"
+        name="hospital_name"
+        list="hospitalList"
+        placeholder="Search Hospital"
+        autocomplete="off"
+        required>
+
+    <datalist id="hospitalList"></datalist>
+</div>
+<!-- ================= Doctor ================= -->
+ <label class="section-title">
+    <i class="fa-solid fa-user-doctor"></i>
+    Select Doctor
+</label>
+
+<div class="input-box">
+    <select id="doctor_id" name="doctor_id">
+    <option value="">Select Doctor</option>
+
+    {% for doctor in doctors %}
+        <option
+            value="{{ doctor.doctor_id }}"
+            data-department="{{ doctor.specialization|lower }}">
+            {{ doctor.full_name }} ({{ doctor.specialization }})
+        </option>
+    {% endfor %}
+</select>
+
+</div>
+
+
+<!-- ================= Features ================= -->
+
+<div class="features">
+
+    <div class="feature-item">
+
+        <i class="fa-solid fa-circle-check"></i>
+
+        <span>Appointment Confirmation Email</span>
+
+    </div>
+
+    <div class="feature-item">
+
+        <i class="fa-solid fa-circle-check"></i>
+
+        <span>Generate Appointment Slip PDF</span>
+
+    </div>
+
+</div>
+
+<!-- ================= Submit ================= -->
+
+<button type="submit" class="book-btn">
+
+    <i class="fa-solid fa-paper-plane"></i>
+
+    Book Appointment
+
+</button>
+
+</form>
+
+</div>
+
+</div>
+<script>
+
+function showText() {
+    document.getElementById("textBox").style.display = "block";
+    document.getElementById("voiceBox").style.display = "none";
+}
+
+function showVoice() {
+    document.getElementById("textBox").style.display = "none";
+    document.getElementById("voiceBox").style.display = "block";
+}
+
+function analyzeSymptoms() {
+
+    let text = document.getElementById("reason").value.toLowerCase().trim();
+
+    let department = "";
+
+    // Cardiology
+    if (
+        text.includes("heart") ||
+        text.includes("chest") ||
+        text.includes("bp") ||
+        text.includes("blood pressure") ||
+        text.includes("cardiac")
+    ) {
+        department = "cardiology";
+    }
+
+    // Neurology
+    else if (
+        text.includes("head") ||
+        text.includes("headache") ||
+        text.includes("brain") ||
+        text.includes("migraine") ||
+        text.includes("fits") ||
+        text.includes("stroke")
+    ) {
+        department = "neurology";
+    }
+
+    // General Medicine
+    else if (
+        text.includes("fever") ||
+        text.includes("cold") ||
+        text.includes("cough") ||
+        text.includes("body pain")
+    ) {
+        department = "general medicine";
+    }
+
+    // Dermatology
+    else if (
+        text.includes("skin") ||
+        text.includes("rash") ||
+        text.includes("allergy")
+    ) {
+        department = "dermatology";
+    }
+
+    // Orthopedics
+    else if (
+        text.includes("bone") ||
+        text.includes("leg pain") ||
+        text.includes("joint") ||
+        text.includes("back pain")
+    ) {
+        department = "orthopedics";
+    }
+
+    // Gastroenterology
+    else if (
+        text.includes("stomach") ||
+        text.includes("gas") ||
+        text.includes("vomit") ||
+        text.includes("ulcer")
+    ) {
+        department = "gastroenterology";
+    }
+
+    // ENT
+    else if (
+        text.includes("ear") ||
+        text.includes("nose") ||
+        text.includes("throat")
+    ) {
+        department = "ent";
+    }
+
+    // Ophthalmology
+    else if (
+        text.includes("eye") ||
+        text.includes("vision") ||
+        text.includes("blur")
+    ) {
+        department = "ophthalmology";
+    }
+
+    document.getElementById("department").value =
+        department === ""
+            ? ""
+            : department.charAt(0).toUpperCase() + department.slice(1);
+
+    filterDoctors(department);
+}
+
+
+function filterDoctors(department) {
+
+    const select = document.getElementById("doctor_id");
+
+    // Clear dropdown
+    select.innerHTML = '<option value="">Select Doctor</option>';
+
+    if (department === "") {
+        return;
+    }
+
+    const doctors = [
+        {% for doctor in doctors %}
+        {
+            id: "{{ doctor.doctor_id }}",
+            name: "{{ doctor.full_name }}",
+            dept: "{{ doctor.specialization|lower }}"
+        },
+        {% endfor %}
+    ];
+
+    doctors.forEach(function(doc){
+
+        if(doc.dept.trim().toLowerCase() === department.trim().toLowerCase()){
+
+            const option = document.createElement("option");
+
+            option.value = doc.id;
+            option.textContent = doc.name + " (" + doc.dept.charAt(0).toUpperCase() + doc.dept.slice(1) + ")";
+
+            select.appendChild(option);
+        }
+
+    });
+
+    console.log("Department:", department);
+    console.log("Doctors shown:", select.options.length - 1);
+}
+
+
+
+// Voice Recognition
+if ('webkitSpeechRecognition' in window) {
+
+    const recognition = new webkitSpeechRecognition();
+
+    recognition.lang = "en-IN";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    document.getElementById("startVoice").onclick = function () {
+
+        document.getElementById("voiceStatus").innerHTML = "🎤 Listening...";
+        recognition.start();
+
+    };
+
+    recognition.onresult = function (event) {
+
+        let speech = event.results[0][0].transcript;
+
+        showText();
+
+        document.getElementById("reason").value = speech;
+
+        document.getElementById("voiceStatus").innerHTML = "✅ Voice Captured";
+
+        analyzeSymptoms();
+
+    };
+
+    recognition.onerror = function (event) {
+
+        document.getElementById("voiceStatus").innerHTML =
+            "❌ " + event.error;
+
+    };
+
+}
+const hospitalInput = document.getElementById("hospital_name");
+const hospitalList = document.getElementById("hospitalList");
+
+hospitalInput.addEventListener("input", function () {
+
+    let keyword = this.value;
+
+    if (keyword.length < 2) {
+        hospitalList.innerHTML = "";
+        return;
+    }
+
+    fetch("/search_hospitals?q=" + keyword)
+        .then(response => response.json())
+        .then(data => {
+
+            hospitalList.innerHTML = "";
+
+            data.forEach(function (hospital) {
+
+                let option = document.createElement("option");
+                option.value = hospital;
+                hospitalList.appendChild(option);
+
+            });
+
+        });
+
+});
+
+
+window.onload = function () {
+
+    showText();
+
+    document.getElementById("reason").addEventListener("keyup", analyzeSymptoms);
+
+};
+
+
+</script>
+</body>
+
+</html>

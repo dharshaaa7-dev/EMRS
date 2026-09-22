@@ -1,0 +1,512 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* ================= RESET ================= */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+/* ================= BODY ================= */
+
+body{
+
+    min-height:100vh;
+
+    overflow-y:auto;
+    overflow-x:hidden;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    padding:30px 0;
+
+    background:linear-gradient(
+        -45deg,
+        #0b1f3a,
+        #163d63,
+        #245a80,
+        #10273f
+    );
+
+    background-size:400% 400%;
+    animation:bgMove 15s ease infinite;
+
+}
+
+@keyframes bgMove{
+
+    0%{
+        background-position:0% 50%;
+    }
+
+    50%{
+        background-position:100% 50%;
+    }
+
+    100%{
+        background-position:0% 50%;
+    }
+
+}
+
+/* ================= CONTAINER ================= */
+
+.container{
+
+    width:100%;
+    min-height:100vh;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    position:relative;
+
+    padding:25px 0;
+
+}
+
+/* ================= FLOATING CIRCLES ================= */
+
+.circle{
+
+    position:absolute;
+    border-radius:50%;
+    filter:blur(5px);
+    animation:float 10s ease-in-out infinite;
+
+}
+
+.circle1{
+
+    width:280px;
+    height:280px;
+
+    background:rgba(255,255,255,.08);
+
+    top:-80px;
+    left:-60px;
+
+}
+
+.circle2{
+
+    width:200px;
+    height:200px;
+
+    background:rgba(0,174,255,.10);
+
+    right:8%;
+    bottom:8%;
+
+    animation-delay:2s;
+
+}
+
+.circle3{
+
+    width:130px;
+    height:130px;
+
+    background:rgba(255,255,255,.06);
+
+    right:25%;
+    top:12%;
+
+    animation-delay:4s;
+
+}
+
+@keyframes float{
+
+    0%,100%{
+        transform:translateY(0);
+    }
+
+    50%{
+        transform:translateY(-25px);
+    }
+
+}
+
+/* ================= LOGIN BOX ================= */
+
+.login-box{
+
+    width:430px;
+
+    padding:35px;
+
+    text-align:center;
+
+    background:rgba(255,255,255,.15);
+
+    backdrop-filter:blur(20px);
+
+    border:1px solid rgba(255,255,255,.25);
+
+    border-radius:25px;
+
+    box-shadow:0 20px 45px rgba(0,0,0,.35);
+
+    animation:fadeUp .8s ease;
+
+    z-index:2;
+
+}
+
+@keyframes fadeUp{
+
+    from{
+        opacity:0;
+        transform:translateY(40px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+
+}
+
+/* ================= ICON ================= */
+
+.doctor-icon{
+
+    width:90px;
+    height:90px;
+
+    margin:auto;
+    margin-bottom:18px;
+
+    border-radius:50%;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    background:linear-gradient(
+        135deg,
+        #1fb6ff,
+        #2563eb
+    );
+
+    color:white;
+
+    font-size:40px;
+
+    box-shadow:0 12px 30px rgba(37,99,235,.45);
+
+    animation:pulse 2.5s infinite;
+
+}
+
+@keyframes pulse{
+
+    0%,100%{
+        transform:scale(1);
+    }
+
+    50%{
+        transform:scale(1.08);
+    }
+
+}
+
+/* ================= HEADING ================= */
+
+.login-box h1{
+
+    color:white;
+
+    font-size:32px;
+
+    font-weight:700;
+
+    margin-bottom:10px;
+
+}
+
+.subtitle{
+
+    color:#eef8ff;
+
+    font-size:15px;
+
+    line-height:24px;
+
+    margin-bottom:22px;
+
+}
+
+/* ================= INPUT ================= */
+/* ================= INPUT BOX ================= */
+
+.input-box{
+    position:relative;
+    width:100%;
+    margin:16px 0;
+}
+
+.input-box > i:first-child{
+    position:absolute;
+    left:18px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#0077ff;
+    font-size:16px;
+    z-index:2;
+}
+
+.input-box input{
+    width:100%;
+    height:52px;
+    padding:0 50px 0 50px;   /* Left space for lock, right space for eye */
+    border:none;
+    outline:none;
+    border-radius:30px;
+    background:#fff;
+    color:#222;
+    font-size:15px;
+    transition:.3s;
+}
+
+.input-box input:focus{
+    box-shadow:0 0 0 4px rgba(37,99,235,.20);
+}
+
+.input-box input::placeholder{
+    color:#666;
+}
+
+.toggle-password{
+    position:absolute;
+    right:18px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#0077ff;
+    font-size:16px;
+    cursor:pointer;
+    z-index:5;
+    transition:.3s;
+}
+
+.toggle-password:hover{
+    color:#00b4ff;
+}
+
+/* ================= REGISTER ================= */
+
+.register{
+    margin-top:20px;
+}
+
+.register p{
+    color:#fff;
+    margin-bottom:10px;
+    font-size:15px;
+}
+
+.register a{
+    display:inline-block;
+    padding:12px 24px;
+    text-decoration:none;
+    color:#fff;
+    border:2px solid rgba(255,255,255,.8);
+    border-radius:40px;
+    transition:.35s;
+    font-weight:600;
+}
+
+.register a:hover{
+    background:#fff;
+    color:#0f766e;
+    transform:translateY(-3px);
+}
+
+/* ================= BACK BUTTON ================= */
+
+.back{
+    display:block;
+    margin-top:18px;
+    color:#fff;
+    text-decoration:none;
+    font-weight:500;
+    transition:.3s;
+}
+
+.back i{
+    margin-right:8px;
+}
+
+.back:hover{
+    color:#7dd3fc;
+    letter-spacing:.5px;
+}
+
+/* ================= CARD HOVER ================= */
+.login-box{
+    width:450px;
+    max-width:90%;
+    padding:30px;
+}
+
+.login-box:hover{
+    transition:.4s;
+}
+
+.input-box input:hover{
+    box-shadow:0 0 12px rgba(125,211,252,.25);
+}
+
+.input-box input::placeholder{
+    color:#666;
+}
+
+.login-btn i{
+    transition:.3s;
+}
+
+.login-btn:hover i{
+    transform:translateX(5px);
+}
+
+/* ================= SCROLL FIX ================= */
+
+body{
+    overflow-y:auto;
+}
+
+.container{
+    min-height:100vh;
+    padding:30px 0;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media(max-width:768px){
+
+    .login-box{
+        width:90%;
+        padding:30px 22px;
+    }
+
+    .doctor-icon{
+        width:80px;
+        height:80px;
+        font-size:34px;
+    }
+
+    .login-box h1{
+        font-size:26px;
+    }
+
+    .subtitle{
+        font-size:14px;
+        line-height:22px;
+    }
+
+    .circle{
+        display:none;
+    }
+}
+
+@media(max-width:480px){
+
+    .login-box{
+        width:92%;
+        padding:25px 18px;
+    }
+
+    .doctor-icon{
+        width:70px;
+        height:70px;
+        font-size:30px;
+    }
+
+    .login-box h1{
+        font-size:22px;
+    }
+
+    .input-box input{
+        padding:14px 50px;
+        font-size:14px;
+    }
+
+    .login-btn{
+        font-size:15px;
+        padding:14px;
+    }
+
+    .register a{
+        width:100%;
+    }
+}
+/*======forgot password ============*/
+.forgot{
+    display: flex;
+    justify-content: flex-end;
+    margin: 10px 5px 20px 0;
+}
+
+.forgot a{
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    transition: .3s;
+}
+
+.forgot a:hover{
+    color: #00e5ff;
+}
+/*========login button=========*/
+.login-btn{
+    width:100%;
+    height:52px;
+    border:none;
+    border-radius:50px;
+    cursor:pointer;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:10px;
+
+    background:linear-gradient(135deg,#00c6ff,#0072ff);
+    color:#fff;
+    font-size:16px;
+    font-weight:600;
+
+    box-shadow:0 12px 25px rgba(0,119,255,.35);
+
+    transition:.35s ease;
+}
+
+.login-btn:hover{
+    transform:translateY(-3px);
+    background:linear-gradient(135deg,#0099ff,#005bea);
+    box-shadow:0 18px 35px rgba(0,119,255,.45);
+}
+
+.login-btn i{
+    font-size:16px;
+}
+/*========toggle password========*/
+.toggle-password{
+    position:absolute;
+    right:18px;
+    top:50%;
+    transform:translateY(-50%);
+    cursor:pointer;
+    color:#0077ff;
+    font-size:16px;
+    z-index:10;
+}
+
+.toggle-password:hover{
+    color:#00b4ff;
+}

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Doctor Registration | EMRS</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/doctor_register.css') }}">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="register-box">
+
+        <!-- Doctor Icon -->
+        <i class="fa-solid fa-user-doctor icon"></i>
+
+        <h1>Doctor Registration</h1>
+
+        <p>Create your doctor account to access the EMRS Portal.</p>
+
+
+        <form action="{{ url_for('doctor_register') }}" method="POST">
+
+
+            <!-- ================= DOCTOR NAME ================= -->
+
+            <div class="input-box">
+
+                <i class="fa-solid fa-user"></i>
+
+                <input
+                    type="text"
+                    name="full_name"
+                    placeholder="Doctor Full Name"
+                    required>
+
+            </div>
+
+
+            <!-- ================= USERNAME ================= -->
+
+            <div class="input-box">
+
+                <i class="fa-solid fa-user-tag"></i>
+
+                <input
+                    type="text"
+                    name="username"
+                    placeholder="Username"
+                    required>
+
+            </div>
+
+
+            <!-- ================= EMAIL ================= -->
+
+            <div class="input-box">
+
+                <i class="fa-solid fa-envelope"></i>
+
+                <input
+                    type="email"
+                    name="email"
+                    placeholder="Email Address"
+                    required>
+
+            </div>
+
+
+            <!-- ================= MOBILE ================= -->
+
+            <div class="input-box">
+
+                <i class="fa-solid fa-phone"></i>
+
+                <input
+                    type="tel"
+                    name="mobile"
+                    placeholder="Mobile Number"
+                    required>
+
+            </div>
+
+
+            <!-- ================= SPECIALIZATION ================= -->
+
+            <div class="input-box">
+
+                <i class="fa-solid fa-stethoscope"></i>
+
+                <input
+                    type="text"
+                    name="specialization"
+                    placeholder="Specialization"
+                    required>
+
+            </div>
+
+
+            <!-- ================= QUALIFICATION ================= -->
+
+            <div class="input-box">
+
+                <i class="fa-solid fa-graduation-cap"></i>
+
+                <input
+                    type="text"
+                    name="qualification"
+                    placeholder="Qualification (MBBS, MD...)"
+                    required>
+
+            </div>
+
+
+            <!-- ================= MEDICAL LICENSE ================= -->
+
+            <div class="input-box">
+
+                <i class="fa-solid fa-id-card"></i>
+
+                <input
+                    type="text"
+                    name="license_no"
+                    placeholder="Medical License Number"
+                    required>
+
+            </div>
+
+
+            <!-- ================= HOSPITAL NAME ================= -->
+
+            <div class="input-box">
+
+                <i class="fa-solid fa-hospital"></i>
+
+                <input
+                    type="text"
+                    name="hospital_name"
+                    placeholder="Hospital Name"
+                    required>
+
+            </div>
+
+
+            <!-- ================= HOSPITAL CITY ================= -->
+
+            <div class="input-box">
+
+                <i class="fa-solid fa-city"></i>
+
+                <input
+                    list="cityList"
+                    name="hospital_city"
+                    id="hospital_city"
+                    placeholder="Select Hospital City"
+                    required>
+
+                <datalist id="cityList">
+
+                    <option value="Chennai">
+                    <option value="Coimbatore">
+                    <option value="Madurai">
+                    <option value="Salem">
+                    <option value="Trichy">
+                    <option value="Erode">
+                    <option value="Vellore">
+                    <option value="Tirunelveli">
+                    <option value="Thoothukudi">
+                    <option value="Thanjavur">
+
+                </datalist>
+
+            </div>
+
+
+            <!-- ================= HOSPITAL DISTRICT ================= -->
+
+            <div class="input-box">
+
+                <i class="fa-solid fa-map-location-dot"></i>
+
+                <input
+                    list="districtList"
+                    name="hospital_district"
+                    id="hospital_district"
+                    placeholder="Select Hospital District"
+                    required>
+
+                <datalist id="districtList">
+
+                    <option value="Ariyalur">
+                    <option value="Chengalpattu">
+                    <option value="Chennai">
+                    <option value="Coimbatore">
+                    <option value="Cuddalore">
+                    <option value="Dharmapuri">
+                    <option value="Dindigul">
+                    <option value="Erode">
+                    <option value="Kallakurichi">
+                    <option value="Kanchipuram">
+                    <option value="Kanniyakumari">
+                    <option value="Karur">
+                    <option value="Krishnagiri">
+                    <option value="Madurai">
+                    <option value="Mayiladuthurai">
+                    <option value="Nagapattinam">
+                    <option value="Namakkal">
+                    <option value="Nilgiris">
+                    <option value="Perambalur">
+                    <option value="Pudukkottai">
+                    <option value="Ramanathapuram">
+                    <option value="Ranipet">
+                    <option value="Salem">
+                    <option value="Sivagangai">
+                    <option value="Tenkasi">
+                    <option value="Thanjavur">
+                    <option value="Theni">
+                    <option value="Thoothukudi">
+                    <option value="Tiruchirappalli">
+                    <option value="Tirunelveli">
+                    <option value="Tirupathur">
+                    <option value="Tiruppur">
+                    <option value="Tiruvallur">
+                    <option value="Tiruvannamalai">
+                    <option value="Tiruvarur">
+                    <option value="Vellore">
+                    <option value="Viluppuram">
+                    <option value="Virudhunagar">
+
+                </datalist>
+
+            </div>
+
+
+            <!-- ================= HOSPITAL STATE ================= -->
+
+            <div class="input-box">
+
+                <i class="fa-solid fa-map"></i>
+
+                <input
+                    list="stateList"
+                    name="hospital_state"
+                    id="hospital_state"
+                    placeholder="Select State"
+                    required>
+
+                <datalist id="stateList">
+
+                    <option value="Tamil Nadu">
+                    <option value="Kerala">
+                    <option value="Karnataka">
+                    <option value="Andhra Pradesh">
+                    <option value="Telangana">
+                    <option value="Maharashtra">
+                    <option value="Delhi">
+                    <option value="Goa">
+                    <option value="Gujarat">
+                    <option value="Punjab">
+
+                </datalist>
+
+            </div>
+
+
+            <!-- ================= PASSWORD ================= -->
+
+            <div class="input-box password-box">
+
+                <!-- Lock Icon -->
+                <i class="fa-solid fa-lock input-icon"></i>
+
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Create Password"
+                    required>
+
+                <!-- Eye Icon -->
+                <i
+                    class="fa-solid fa-eye toggle-password"
+                    onclick="togglePassword('password', this)">
+                </i>
+
+            </div>
+
+
+            <!-- ================= CONFIRM PASSWORD ================= -->
+
+            <div class="input-box password-box">
+
+                <!-- Lock Icon -->
+                <i class="fa-solid fa-lock input-icon"></i>
+
+                <input
+                    type="password"
+                    id="confirmPassword"
+                    name="confirm_password"
+                    placeholder="Confirm Password"
+                    required>
+
+                <!-- Eye Icon -->
+                <i
+                    class="fa-solid fa-eye toggle-password"
+                    onclick="togglePassword('confirmPassword', this)">
+                </i>
+
+            </div>
+
+
+            <!-- ================= REGISTER BUTTON ================= -->
+
+            <button type="submit" class="register-btn">
+
+                <i class="fa-solid fa-user-plus"></i>
+
+                Register
+
+            </button>
+
+        </form>
+
+
+        <!-- ================= LOGIN LINK ================= -->
+
+        <div class="login-link">
+
+            <p>Already have an account?</p>
+
+            <a href="{{ url_for('doctor_login') }}">
+                Login Here
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ================= JAVASCRIPT ================= -->
+
+<script>
+
+function togglePassword(id, icon) {
+
+    let input = document.getElementById(id);
+
+    if (input.type === "password") {
+
+        input.type = "text";
+
+        icon.classList.remove("fa-eye");
+
+        icon.classList.add("fa-eye-slash");
+
+    } else {
+
+        input.type = "password";
+
+        icon.classList.remove("fa-eye-slash");
+
+        icon.classList.add("fa-eye");
+
+    }
+
+}
+
+
+/* Password Match Validation */
+
+document.querySelector("form").addEventListener("submit", function(e) {
+
+    let password =
+        document.getElementById("password").value;
+
+    let confirmPassword =
+        document.getElementById("confirmPassword").value;
+
+
+    if (password !== confirmPassword) {
+
+        alert("Passwords do not match!");
+
+        e.preventDefault();
+
+    }
+
+});
+
+</script>
+
+
+</body>
+</html>

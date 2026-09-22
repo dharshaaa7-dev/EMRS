@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | EMRS</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/admin_dashboard.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+
+<body>
+
+<!-- ================= SIDEBAR ================= -->
+
+<div class="sidebar">
+
+    <div class="logo">
+        <i class="fa-solid fa-user-shield"></i>
+        <h2>EMRS</h2>
+    </div>
+
+    <div class="menu">
+
+        <a href="#" class="active">
+            <i class="fa-solid fa-house"></i>
+            Dashboard
+        </a>
+
+        <a href="#">
+            <i class="fa-solid fa-users"></i>
+            Patients
+        </a>
+
+        <a href="#">
+            <i class="fa-solid fa-user-doctor"></i>
+            Doctors
+        </a>
+
+        <a href="#">
+            <i class="fa-solid fa-calendar-check"></i>
+            Appointments
+        </a>
+
+        <a href="#">
+            <i class="fa-solid fa-file-medical"></i>
+            Medical Records
+        </a>
+
+        <a href="#">
+            <i class="fa-solid fa-hospital"></i>
+            Hospital
+        </a>
+
+        <a href="#">
+            <i class="fa-solid fa-gear"></i>
+            Settings
+        </a>
+
+    </div>
+
+    <div class="logout">
+        <a href="{{ url_for('admin_logout') }}">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            Logout
+        </a>
+    </div>
+
+</div>
+
+<!-- ================= MAIN CONTENT ================= -->
+
+<div class="main-content">
+
+    <div class="header">
+        <h1>Admin Dashboard</h1>
+        <p>Welcome back, {{ admin.full_name }}</p>
+    </div>
+
+    <div class="cards">
+
+        <div class="card">
+            <i class="fa-solid fa-users"></i>
+            <h2>150</h2>
+            <p>Total Patients</p>
+        </div>
+
+        <div class="card">
+            <i class="fa-solid fa-user-doctor"></i>
+            <h2>25</h2>
+            <p>Total Doctors</p>
+        </div>
+
+        <div class="card">
+            <i class="fa-solid fa-calendar-check"></i>
+            <h2>48</h2>
+            <p>Appointments</p>
+        </div>
+
+        <div class="card">
+            <i class="fa-solid fa-file-medical"></i>
+            <h2>320</h2>
+            <p>Medical Records</p>
+        </div>
+
+    </div>
+
+    <div class="profile-box">
+
+        <h2>Administrator Information</h2>
+
+        <table>
+
+            <tr>
+                <td>Full Name</td>
+                <td>{{ admin.full_name }}</td>
+            </tr>
+
+            <tr>
+                <td>Username</td>
+                <td>{{ admin.username }}</td>
+            </tr>
+
+            <tr>
+                <td>Email</td>
+                <td>{{ admin.email }}</td>
+            </tr>
+
+            <tr>
+                <td>Employee ID</td>
+                <td>{{ admin.employee_id }}</td>
+            </tr>
+
+            <tr>
+                <td>Mobile</td>
+                <td>{{ admin.mobile }}</td>
+            </tr>
+
+            <tr>
+                <td>Department</td>
+                <td>{{ admin.department }}</td>
+            </tr>
+
+            <tr>
+                <td>Hospital</td>
+                <td>{{ admin.hospital_name }}</td>
+            </tr>
+
+            <tr>
+                <td>City</td>
+                <td>{{ admin.city }}</td>
+            </tr>
+
+            <tr>
+                <td>State</td>
+                <td>{{ admin.state }}</td>
+            </tr>
+
+        </table>
+
+    </div>
+
+</div>
+
+</body>
+</html>

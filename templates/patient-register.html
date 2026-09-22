@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Patient Registration</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/patient-register.css') }}">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="register-box">
+
+        <span class="icon">🏥</span>
+
+        <h1>Patient Registration</h1>
+
+        <p>Create your EMRS Account</p>
+
+        <form action="{{ url_for('patient_register') }}" method="POST" id="registerForm">
+
+            <!-- Full Name -->
+            <div class="input-box">
+                <label>Full Name</label>
+                <input type="text"
+                       name="full_name"
+                       placeholder="Enter Full Name"
+                       required>
+            </div>
+
+            <!-- Username -->
+            <div class="input-box">
+                <label>Username</label>
+                <input type="text"
+                       name="username"
+                       placeholder="Choose Username"
+                       minlength="4"
+                       maxlength="20"
+                       required>
+            </div>
+
+            <!-- Email -->
+            <div class="input-box">
+                <label>Email</label>
+                <input type="email"
+                       name="email"
+                       placeholder="Enter Email"
+                       required>
+            </div>
+
+            <!-- Mobile -->
+            <div class="input-box">
+                <label>Mobile Number</label>
+                <input type="text"
+                       id="mobile"
+                       name="mobile"
+                       placeholder="Enter 10 Digit Mobile Number"
+                       inputmode="numeric"
+                       pattern="[0-9]{10}"
+                       minlength="10"
+                       maxlength="10"
+                       title="Mobile number must be exactly 10 digits"
+                       required>
+                <p id="mobileMessage" class="strength-message"></p>
+            </div>
+
+            <!-- DOB -->
+            <div class="input-box">
+                <label>Date of Birth</label>
+                <input type="date"
+                       name="dob"
+                       required>
+            </div>
+
+            <!-- Gender -->
+            <div class="input-box">
+                <label>Gender</label>
+
+                <select name="gender" required>
+                    <option value="">Select Gender</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Other</option>
+                </select>
+
+            </div>
+
+            <!-- Blood Group (select OR type) -->
+            <div class="input-box">
+                <label>Blood Group</label>
+
+                <input type="text"
+                       name="blood_group"
+                       list="bloodGroupList"
+                       placeholder="Select or Type Blood Group"
+                       maxlength="3">
+
+                <datalist id="bloodGroupList">
+                    <option value="A+">
+                    <option value="A-">
+                    <option value="B+">
+                    <option value="B-">
+                    <option value="AB+">
+                    <option value="AB-">
+                    <option value="O+">
+                    <option value="O-">
+                </datalist>
+            </div>
+
+            <!-- Address Details -->
+
+            <h3 style="color:#0077b6; margin-top:20px; margin-bottom:15px;">
+                Address Details
+            </h3>
+
+            <div class="input-box">
+                <label>House No / Door No</label>
+                <input type="text"
+                       name="house_no"
+                       placeholder="House No / Door No"
+                       required>
+            </div>
+
+            <div class="input-box">
+                <label>Street / Area</label>
+                <input type="text"
+                       name="street"
+                       placeholder="Street / Area"
+                       required>
+            </div>
+
+            <div class="input-box">
+                <label>City / Town</label>
+                <input type="text"
+                       name="city"
+                       placeholder="Enter City"
+                       required>
+            </div>
+
+            <div class="input-box">
+                <label>District</label>
+                <input type="text"
+                       name="district"
+                       placeholder="Enter District"
+                       required>
+            </div>
+
+            <div class="input-box">
+                <label>State</label>
+                <input type="text"
+                       name="state"
+                       placeholder="Enter State"
+                       required>
+            </div>
+
+            <div class="input-box">
+                <label>Pincode</label>
+                <input type="text"
+                       name="pincode"
+                       placeholder="Enter Pincode"
+                       maxlength="6"
+                       required>
+            </div>
+            <div class="input-box">
+    <label>Hospital</label>
+
+    <input
+        type="text"
+        name="hospital_name"
+        id="hospital_name"
+        list="hospitalList"
+        placeholder="Search Hospital (e.g. Government Hospital Sivakasi)"
+        autocomplete="off"
+        required>
+
+    <datalist id="hospitalList">
+    </datalist>
+</div>
+
+            <!-- Emergency Contact Name -->
+            <div class="input-box">
+                <label>Emergency Contact Name</label>
+                <input type="text"
+                       name="emergency_name"
+                       placeholder="Emergency Contact Name">
+            </div>
+
+            <!-- Emergency Contact Number -->
+            <div class="input-box">
+                <label>Emergency Contact Number</label>
+                <input type="text"
+                       name="emergency_phone"
+                       placeholder="Emergency Contact Number">
+            </div>
+
+            <!-- Password -->
+            <div class="input-box">
+                <label>Password</label>
+
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Create Password"
+                    minlength="8"
+                    maxlength="20"
+                    required>
+
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="input-box">
+                <label>Confirm Password</label>
+
+                <input
+                    type="password"
+                    id="confirmPassword"
+                    name="confirm_password"
+                    placeholder="Re-enter Password"
+                    minlength="8"
+                    maxlength="20"
+                    required>
+
+            </div>
+
+            <p id="matchMessage" class="strength-message"></p>
+
+            <!-- Show Password -->
+            <div class="show-password">
+                <label>
+                    <input type="checkbox" id="showPassword">
+                    Show Password
+                </label>
+            </div>
+
+            <!-- Password Strength -->
+            <p id="strengthMessage" class="strength-message"></p>
+
+        <div style="text-align:center; margin-top:20px;">
+        <button type="submit" class="register-btn">
+            Create Account
+        </button>
+        </div>
+
+        </form>
+
+        <div class="login-link">
+
+            Already have an account?
+
+            <br><br>
+
+            <a href="{{ url_for('patient_login') }}">
+                Login Here
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const password = document.getElementById("password");
+const confirmPassword = document.getElementById("confirmPassword");
+const showPassword = document.getElementById("showPassword");
+const strength = document.getElementById("strengthMessage");
+const matchMessage = document.getElementById("matchMessage");
+const mobile = document.getElementById("mobile");
+const mobileMessage = document.getElementById("mobileMessage");
+const registerForm = document.getElementById("registerForm");
+
+// Show/Hide Password (applies to both fields)
+showPassword.addEventListener("change", function(){
+
+    const type = this.checked ? "text" : "password";
+    password.type = type;
+    confirmPassword.type = type;
+
+});
+
+// Password Strength Check
+password.addEventListener("keyup", function(){
+
+    const value = password.value;
+
+    if(value.length < 8){
+
+        strength.innerHTML = "❌ Password must contain at least 8 characters";
+        strength.style.color = "red";
+
+    }
+
+    else if(
+        !/[A-Z]/.test(value) ||
+        !/[a-z]/.test(value) ||
+        !/[0-9]/.test(value)
+    ){
+
+        strength.innerHTML = "⚠ Medium Password (Use uppercase, lowercase and a number)";
+        strength.style.color = "orange";
+
+    }
+
+    else{
+
+        strength.innerHTML = "✅ Strong Password";
+        strength.style.color = "limegreen";
+
+    }
+
+    checkPasswordMatch();
+
+});
+
+// Confirm Password Match Check
+confirmPassword.addEventListener("keyup", checkPasswordMatch);
+
+function checkPasswordMatch(){
+
+    if(confirmPassword.value.length === 0){
+        matchMessage.innerHTML = "";
+        return;
+    }
+
+    if(password.value === confirmPassword.value){
+        matchMessage.innerHTML = "✅ Passwords Match";
+        matchMessage.style.color = "limegreen";
+    } else {
+        matchMessage.innerHTML = "❌ Passwords Do Not Match";
+        matchMessage.style.color = "red";
+    }
+
+}
+
+// Mobile Number: allow only digits, exactly 10
+mobile.addEventListener("input", function(){
+
+    // Remove any non-digit character as user types
+    this.value = this.value.replace(/[^0-9]/g, "").slice(0, 10);
+
+    if(this.value.length === 0){
+        mobileMessage.innerHTML = "";
+    }
+    else if(this.value.length < 10){
+        mobileMessage.innerHTML = "❌ Mobile number must be 10 digits";
+        mobileMessage.style.color = "red";
+    }
+    else{
+        mobileMessage.innerHTML = "✅ Valid Mobile Number";
+        mobileMessage.style.color = "limegreen";
+    }
+
+});
+
+// Final check before submitting the form
+registerForm.addEventListener("submit", function(e){
+
+    if(password.value !== confirmPassword.value){
+        e.preventDefault();
+        matchMessage.innerHTML = "❌ Passwords Do Not Match";
+        matchMessage.style.color = "red";
+        return;
+    }
+
+    if(mobile.value.length !== 10){
+        e.preventDefault();
+        mobileMessage.innerHTML = "❌ Mobile number must be 10 digits";
+        mobileMessage.style.color = "red";
+        return;
+    }
+
+});
+
+const hospitalInput = document.getElementById("hospital_name");
+const hospitalList = document.getElementById("hospitalList");
+
+hospitalInput.addEventListener("input", function(){
+
+    let keyword = this.value;
+
+    if(keyword.length < 2){
+        hospitalList.innerHTML = "";
+        return;
+    }
+
+    fetch("/search_hospitals?q=" + keyword)
+    .then(res => res.json())
+    .then(data => {
+
+        hospitalList.innerHTML = "";
+
+        data.forEach(function(hospital){
+
+            let option = document.createElement("option");
+            option.value = hospital;
+            hospitalList.appendChild(option);
+
+        });
+
+    });
+
+});
+
+
+</script>
+
+</body>
+</html>
