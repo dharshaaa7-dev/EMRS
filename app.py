@@ -11,7 +11,6 @@ from flask_mail import Mail, Message
 app = Flask(__name__)
 app.secret_key = "emrs_secret_key_2026"
 
-
 # ================= MAIL CONFIGURATION ================= #
 app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 587
@@ -20,31 +19,22 @@ app.config["MAIL_USERNAME"] = "dharshaaa7@gmail.com"
 app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
 
 mail = Mail(app)
-print(app.config["MAIL_SERVER"])
 
 # ================= DATABASE CONNECTION ================= #
+import os
 
-app.config["MAIL_SERVER"] = "smtp.gmail.com"
-app.config["MAIL_PORT"] = 587
-app.config["MAIL_USE_TLS"] = True
-app.config["MAIL_USERNAME"] = "dharshaaa7@gmail.com"
-app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
-
-mail = Mail(app)
-print(app.config["MAIL_SERVER"])
-# ================= DATABASE CONNECTION ================= #
 db = mysql.connector.connect(
-    host="localhost",
-    port=3307,
-    user="root",
-    password="emrs@1502",
-    database="emrs"
+    host="emrs-project-emrs-project.j.aivencloud.com",
+    port=19848,
+    user="avnadmin",
+    password=os.environ.get("DB_PASSWORD"),
+    database="defaultdb",
+    ssl_disabled=False
 )
 
 cursor = db.cursor(dictionary=True)
 
 print("✅ Database Connected Successfully!")
-
 # ================= HOME PAGE ================= #
 
 @app.route("/")
