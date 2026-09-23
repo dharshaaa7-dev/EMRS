@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -16,7 +15,6 @@
 
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-
 </head>
 
 <body>
@@ -162,37 +160,23 @@
             </div>
 
         </section>
-
-        <!-- ================= Doctor Profile ================= -->
-
         <section class="doctor-info">
 
-            <div class="profile-card">
+        <div class="profile-card">
 
-                <div class="profile-image">
-                    <i class="fa-solid fa-user-doctor"></i>
-                </div>
-
-                <div class="profile-info">
-
-                    <h2>
-                        Dr. {{ session.get('doctor_name','Doctor') }}
-                    </h2>
-
-                    <p>
-                        {{ session.get('specialization','General Physician') }}
-                    </p>
-
-                    <span>
-                        Electronic Medical Record System
-                    </span>
-
-                </div>
-
+            <div class="profile-image">
+                <i class="fa-solid fa-user-doctor"></i>
             </div>
 
-        </section>
+            <div class="profile-info">
+                <h2>Dr. {{ session.get('doctor_name','Doctor') }}</h2>
+                <p>{{ session.get('specialization','General Physician') }}</p>
+                <span>Electronic Medical Record System</span>
+            </div>
 
+        </div>
+
+    </section>
                 <!-- ================= Upcoming Appointments ================= -->
 
         <section class="upcoming-section" id="appointments">
@@ -205,18 +189,14 @@
             <table>
 
                 <thead>
-
                     <tr>
-
                         <th>Appointment ID</th>
                         <th>Patient</th>
                         <th>Date</th>
                         <th>Time</th>
                         <th>Status</th>
                         <th>Action</th>
-
                     </tr>
-
                 </thead>
 
                 <tbody>
@@ -228,11 +208,8 @@
                     <tr>
 
                         <td>{{ appointment.appointment_id }}</td>
-
                         <td>{{ appointment.patient_name }}</td>
-
                         <td>{{ appointment.appointment_date }}</td>
-
                         <td>{{ appointment.appointment_time }}</td>
 
                         <td>
@@ -268,18 +245,14 @@
 
                                 <a href="{{ url_for('approve', id=appointment.appointment_id) }}"
                                    class="approve-btn">
-
                                     <i class="fa-solid fa-check"></i>
                                     Approve
-
                                 </a>
 
                                 <a href="{{ url_for('reject', id=appointment.appointment_id) }}"
                                    class="reject-btn">
-
                                     <i class="fa-solid fa-xmark"></i>
                                     Reject
-
                                 </a>
 
                             {% elif appointment.status == "Approved" %}
@@ -333,11 +306,7 @@
         <!-- ================= Footer ================= -->
 
         <footer class="footer">
-
-            <p>
-                © 2026 EMRS - Electronic Medical Record System
-            </p>
-
+            <p>© 2026 EMRS - Electronic Medical Record System</p>
         </footer>
 
     </main>
@@ -350,17 +319,20 @@ function updateClock(){
 
     const now = new Date();
 
-    document.getElementById("clock").innerHTML =
-        now.toLocaleTimeString();
+    document.getElementById("clock").textContent =
+        now.toLocaleTimeString("en-IN",{
+            hour:"2-digit",
+            minute:"2-digit",
+            second:"2-digit",
+            hour12:true
+        });
 
 }
 
-setInterval(updateClock,1000);
-
 updateClock();
+setInterval(updateClock,1000);
 
 </script>
 
 </body>
-
 </html>

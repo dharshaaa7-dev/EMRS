@@ -22,16 +22,14 @@ mail = Mail(app)
 
 # ================= DATABASE CONNECTION ================= #
 import os
-
 db = mysql.connector.connect(
     host="emrs-project-emrs-project.j.aivencloud.com",
     port=19848,
     user="avnadmin",
     password=os.environ.get("DB_PASSWORD"),
     database="defaultdb",
-    ssl_disabled=False
+    ssl_ca="ca.pem"
 )
-
 cursor = db.cursor(dictionary=True)
 
 print("✅ Database Connected Successfully!")
@@ -117,6 +115,8 @@ def doctor_login():
 def doctor_register():
 
     if request.method == "POST":
+        doctor_id = request.form.get("doctor_id")
+        print("Doctor Selected From Form:", doctor_id)
 
         print(request.form)
 
@@ -203,7 +203,6 @@ def doctor_register():
         return redirect(url_for("doctor_dashboard"))
 
     return render_template("doctor_register.html")
-
 # ================= DOCTOR DASHBOARD ================= #
 @app.route("/doctor_dashboard")
 def doctor_dashboard():
@@ -211,8 +210,24 @@ def doctor_dashboard():
     if "doctor_id" not in session:
         return redirect(url_for("doctor_login"))
 
+    # Logged in doctor id
     doctor_id = session["doctor_id"]
 
+    # Get logged-in doctor's hospital
+    cursor.execute("""
+        SELECT hospital_name
+        FROM doctor
+        WHERE doctor_id=%s
+    """, (doctor_id,))
+
+    doctor = cursor.fetchone()
+
+    if not doctor:
+        return redirect(url_for("doctor_login"))
+
+    hospital_name = doctor["hospital_name"]
+
+    # Get appointments only for this doctor
     cursor.execute("""
         SELECT
             a.appointment_id,
@@ -224,21 +239,28 @@ def doctor_dashboard():
             a.hospital_name,
             a.status
         FROM appointment a
-        JOIN patient p
+        INNER JOIN patient p
             ON a.patient_id = p.patient_id
-        WHERE a.doctor_id = %s
-        ORDER BY a.appointment_date ASC,
-                 a.appointment_time ASC
-    """, (doctor_id,))
+        WHERE a.doctor_id=%s
+          AND a.hospital_name=%s
+        ORDER BY
+            a.appointment_date ASC,
+            a.appointment_time ASC
+    """, (doctor_id, hospital_name))
 
     appointments = cursor.fetchall()
 
+    total_patients = len(set(a["patient_id"] for a in appointments))
+    pending_count = sum(1 for a in appointments if a["status"] == "Pending")
+    approved_count = sum(1 for a in appointments if a["status"] == "Approved")
+
     return render_template(
         "doctor_dashboard.html",
-        appointments=appointments
+        appointments=appointments,
+        total_patients=total_patients,
+        pending_count=pending_count,
+        approved_count=approved_count
     )
-
-
 # ================= APPROVE APPOINTMENT ================= #
 @app.route("/approve/<int:id>")
 def approve(id):
@@ -686,7 +708,7 @@ def book_appointment():
 
             patient = cursor.fetchone()
             hospital_name = patient["hospital_name"]
-
+            print("Selected Doctor ID:", doctor_id)
             cursor.execute("""
                 INSERT INTO appointment
                 (
@@ -1342,4 +1364,4 @@ def page_not_found(error):
 
 # ================= RUN APP ================= #
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)
