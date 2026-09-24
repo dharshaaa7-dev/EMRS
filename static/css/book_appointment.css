@@ -184,6 +184,25 @@ textarea{
 
     transition:.3s;
 }
+.input-box{
+    width:100%;
+    margin-bottom:20px;
+}
+
+.input-box label{
+    display:block;
+    margin-bottom:8px;
+    font-size:16px;
+    font-weight:600;
+    color:#0f4fa8;
+}
+
+.input-box input,
+.input-box select,
+.input-box textarea{
+    width:100%;
+    box-sizing:border-box;
+}
 
 input:focus,
 select:focus,

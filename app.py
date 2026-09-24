@@ -16,7 +16,7 @@ app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 587
 app.config["MAIL_USE_TLS"] = True
 app.config["MAIL_USERNAME"] = "dharshaaa7@gmail.com"
-app.config["MAIL_PASSWORD"] = os.environ.get("MAIL_PASSWORD")
+app.config["MAIL_PASSWORD"] = os.environ.get("auro xawu hozz qsnm")
 
 mail = Mail(app)
 
@@ -26,9 +26,10 @@ db = mysql.connector.connect(
     host="emrs-project-emrs-project.j.aivencloud.com",
     port=19848,
     user="avnadmin",
-    password=os.environ.get("DB_PASSWORD"),
+    password="AVNS__VIr2odYDjuaKrICSSh",
     database="defaultdb",
-    ssl_ca="ca.pem"
+    ssl_ca="ca.pem",
+    connection_timeout=30
 )
 cursor = db.cursor(dictionary=True)
 
@@ -79,7 +80,7 @@ def patient_login():
             )
 
     return render_template("patient_login.html")
-# ================= DOCTOR ~================= #
+# ================= DOCTOR login ~================= #
 
 @app.route("/doctor_login", methods=["GET", "POST"])
 def doctor_login():
@@ -116,7 +117,7 @@ def doctor_register():
 
     if request.method == "POST":
         doctor_id = request.form.get("doctor_id")
-        print("Doctor Selected From Form:", doctor_id)
+        print("Selected Doctor ID :", doctor_id)
 
         print(request.form)
 
@@ -156,6 +157,10 @@ def doctor_register():
         if cursor.fetchone():
             return "❌ Username already exists"
         sql = """
+        print("Saving Appointment...")
+        print("Patient ID :", patient_id)
+        print("Doctor ID :", doctor_id)
+        print("Hospital :", hospital_name)
         INSERT INTO doctor
         (
             full_name,
@@ -203,31 +208,35 @@ def doctor_register():
         return redirect(url_for("doctor_dashboard"))
 
     return render_template("doctor_register.html")
-# ================= DOCTOR DASHBOARD ================= #
+
+#============doctor dashboard==============#
 @app.route("/doctor_dashboard")
 def doctor_dashboard():
 
     if "doctor_id" not in session:
         return redirect(url_for("doctor_login"))
 
-    # Logged in doctor id
     doctor_id = session["doctor_id"]
+    print("Logged Doctor ID :", doctor_id)
 
-    # Get logged-in doctor's hospital
+    # ================= GET DOCTOR DETAILS =================
     cursor.execute("""
-        SELECT hospital_name
+        SELECT doctor_id, full_name, hospital_name
         FROM doctor
         WHERE doctor_id=%s
     """, (doctor_id,))
 
     doctor = cursor.fetchone()
+    print("Doctor Details :", doctor)
 
-    if not doctor:
+    if doctor is None:
+        session.clear()
         return redirect(url_for("doctor_login"))
 
     hospital_name = doctor["hospital_name"]
+    print("Hospital :", hospital_name)
 
-    # Get appointments only for this doctor
+    # ================= GET APPOINTMENTS =================
     cursor.execute("""
         SELECT
             a.appointment_id,
@@ -236,30 +245,33 @@ def doctor_dashboard():
             a.appointment_date,
             a.appointment_time,
             a.reason,
-            a.hospital_name,
-            a.status
+            a.status,
+            a.hospital_name
         FROM appointment a
         INNER JOIN patient p
             ON a.patient_id = p.patient_id
         WHERE a.doctor_id=%s
-          AND a.hospital_name=%s
         ORDER BY
             a.appointment_date ASC,
             a.appointment_time ASC
-    """, (doctor_id, hospital_name))
+    """, (doctor_id,))
 
     appointments = cursor.fetchall()
+    print("Appointments :", appointments)
 
     total_patients = len(set(a["patient_id"] for a in appointments))
     pending_count = sum(1 for a in appointments if a["status"] == "Pending")
     approved_count = sum(1 for a in appointments if a["status"] == "Approved")
+    rejected_count = sum(1 for a in appointments if a["status"] == "Rejected")
 
     return render_template(
         "doctor_dashboard.html",
+        doctor=doctor,
         appointments=appointments,
         total_patients=total_patients,
         pending_count=pending_count,
-        approved_count=approved_count
+        approved_count=approved_count,
+        rejected_count=rejected_count
     )
 # ================= APPROVE APPOINTMENT ================= #
 @app.route("/approve/<int:id>")
@@ -635,33 +647,42 @@ def patient_dashboard():
 @app.route("/book_appointment", methods=["GET", "POST"])
 def book_appointment():
 
-    # Patient Login Check
     if "patient_id" not in session:
         return redirect(url_for("patient_login"))
 
     patient_id = session["patient_id"]
 
-    # Get patient's selected hospital
+    # ================= GET PATIENT DETAILS =================
     cursor.execute("""
-        SELECT hospital_name
+        SELECT full_name, email, hospital_name
         FROM patient
         WHERE patient_id=%s
     """, (patient_id,))
 
     patient = cursor.fetchone()
-    hospital_name = patient["hospital_name"]
+    print("Patient Details :", patient)
 
-    # Default doctor list
+    if patient is None:
+        return "Patient not found"
+
+    # IMPORTANT
+    hospital_name = patient["hospital_name"]
+    suggested_department = ""
+
+    # ❌ REMOVE THIS LINE (don't use it)
+    # patient = cursor.fetchone()
+
+    # ================= LOAD ALL DOCTORS =================
     cursor.execute("""
-        SELECT doctor_id,
-               full_name,
-               specialization
+        SELECT
+            doctor_id,
+            full_name,
+            specialization
         FROM doctor
         ORDER BY full_name
     """)
-    doctors = cursor.fetchall()
 
-    suggested_department = ""
+    doctors = cursor.fetchall()
 
     if request.method == "POST":
 
@@ -678,18 +699,18 @@ def book_appointment():
 
         appointment_time = f"{hour:02}:{minute:02}:00"
 
-        # DON'T take hospital name from form
         reason = request.form["reason"]
 
         suggested_department = suggest_department(reason)
 
-        # Get doctors of suggested department
+        # ================= FILTER DOCTORS =================
         cursor.execute("""
-            SELECT doctor_id,
-                   full_name,
-                   specialization
+            SELECT
+                doctor_id,
+                full_name,
+                specialization
             FROM doctor
-            WHERE specialization=%s
+            WHERE LOWER(specialization)=LOWER(%s)
             ORDER BY full_name
         """, (suggested_department,))
 
@@ -699,16 +720,7 @@ def book_appointment():
 
         if doctor_id:
 
-            # Again fetch patient's hospital
-            cursor.execute("""
-                SELECT hospital_name
-                FROM patient
-                WHERE patient_id=%s
-            """, (patient_id,))
-
-            patient = cursor.fetchone()
-            hospital_name = patient["hospital_name"]
-            print("Selected Doctor ID:", doctor_id)
+            # ================= SAVE APPOINTMENT =================
             cursor.execute("""
                 INSERT INTO appointment
                 (
@@ -721,9 +733,7 @@ def book_appointment():
                     hospital_name
                 )
                 VALUES
-                (
-                    %s,%s,%s,%s,%s,%s,%s
-                )
+                (%s,%s,%s,%s,%s,%s,%s)
             """, (
                 patient_id,
                 doctor_id,
@@ -737,6 +747,80 @@ def book_appointment():
             db.commit()
 
             appointment_id = cursor.lastrowid
+
+            # ================= GET DOCTOR DETAILS =================
+            cursor.execute("""
+                SELECT
+                    full_name,
+                    email
+                FROM doctor
+                WHERE doctor_id=%s
+            """, (doctor_id,))
+
+            doctor = cursor.fetchone()
+            # ================= SEND MAIL TO DOCTOR =================
+            if doctor and doctor.get("email"):
+
+                msg = Message(
+                    subject="New Appointment Request - EMRS",
+                    sender=app.config["MAIL_USERNAME"],
+                    recipients=[doctor["email"]]
+                )
+
+                msg.body = f"""
+                Hello Dr. {doctor['full_name']},
+
+                You have received a new appointment request.
+
+                Appointment ID : {appointment_id}
+                Patient ID : {patient_id}
+                Date : {appointment_date}
+                Time : {appointment_time}
+                Reason : {reason}
+
+                Please login to EMRS and review the appointment.
+
+                Regards,
+                EMRS
+                """
+
+                try:
+                    mail.send(msg)
+                except Exception as e:
+                    print("Doctor Mail Error :", e)
+
+            # ================= SEND MAIL TO PATIENT =================
+            if patient and patient.get("email"):
+
+                msg = Message(
+                    subject="Appointment Booked Successfully",
+                    sender=app.config["MAIL_USERNAME"],
+                    recipients=[patient["email"]]
+                )
+
+                msg.body = f"""
+                Hello {patient['full_name']},
+
+                Your appointment has been booked successfully.
+
+                Appointment ID : {appointment_id}
+                Date : {appointment_date}
+                Time : {appointment_time}
+                Status : Pending
+
+                Your doctor will review your appointment soon.
+
+                Thank you,
+                EMRS
+                """
+
+                try:
+                    mail.send(msg)
+                except Exception as e:
+                    print("Patient Mail Error :", e)
+
+            else:
+                print("Patient not found or email missing.")
 
             return redirect(
                 url_for(
@@ -754,59 +838,40 @@ def book_appointment():
 # ================= AI Department Suggestion ================= #
 
 def suggest_department(reason):
+
     reason = reason.lower()
 
+    # Neurologist
     if any(word in reason for word in [
-        "headache", "migraine", "brain", "dizzy",
-        "fits", "stroke"
+        "headache", "migraine", "brain",
+        "dizzy", "fits", "stroke",
+        "nerve", "seizure"
     ]):
-        return "Neurology"
+        return "Neurologist"
 
+    # Cardiologist
     elif any(word in reason for word in [
-        "chest pain", "heart", "bp",
-        "blood pressure", "palpitation"
+        "heart", "heart pain", "chest pain",
+        "bp", "blood pressure",
+        "palpitation", "cardiac"
     ]):
-        return "Cardiology"
+        return "Cardiologist"
 
+    # General Physician
     elif any(word in reason for word in [
         "fever", "cold", "cough",
-        "infection", "body pain"
+        "infection", "body pain",
+        "vomit", "stomach pain",
+        "gas", "ulcer",
+        "abdomen", "weakness"
     ]):
-        return "General Medicine"
-
-    elif any(word in reason for word in [
-        "stomach", "vomit", "gas",
-        "ulcer", "abdomen"
-    ]):
-        return "Gastroenterology"
-
-    elif any(word in reason for word in [
-        "skin", "rash", "itching",
-        "pimple", "allergy"
-    ]):
-        return "Dermatology"
-
-    elif any(word in reason for word in [
-        "bone", "joint", "fracture",
-        "leg pain", "back pain"
-    ]):
-        return "Orthopedics"
-
-    elif any(word in reason for word in [
-        "eye", "vision", "blur",
-        "red eye"
-    ]):
-        return "Ophthalmology"
-
-    elif any(word in reason for word in [
-        "ear", "nose", "throat",
-        "hearing"
-    ]):
-        return "ENT"
+        return "General Physician"
 
     else:
-        return "General Medicine"
-#==============appointment success page======================#
+        return "General Physician"
+
+
+# ================= Appointment Success ================= #
 
 @app.route("/appointment_success")
 def appointment_success():
@@ -820,7 +885,6 @@ def appointment_success():
         "appointment_success.html",
         appointment_id=appointment_id
     )
-
 #===========appointment approval==================#
 @app.route("/my_appointments")
 def my_appointments():
@@ -1364,4 +1428,4 @@ def page_not_found(error):
 
 # ================= RUN APP ================= #
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    app.run(debug=True)

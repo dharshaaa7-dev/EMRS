@@ -167,15 +167,12 @@ readonly>
 <!------------hpspital selection----------->
 <div class="input-box">
     <label>Hospital</label>
-
     <input
-        type="text"
-        id="hospital_name"
-        name="hospital_name"
-        list="hospitalList"
-        placeholder="Search Hospital"
-        autocomplete="off"
-        required>
+    type="text"
+    id="hospital_name"
+    name="hospital_name"
+    value="{{ hospital_name }}"
+    readonly>
 
     <datalist id="hospitalList"></datalist>
 </div>
@@ -264,7 +261,7 @@ function analyzeSymptoms() {
         text.includes("blood pressure") ||
         text.includes("cardiac")
     ) {
-        department = "cardiology";
+        department = "cardiologist";
     }
 
     // Neurology
@@ -276,7 +273,7 @@ function analyzeSymptoms() {
         text.includes("fits") ||
         text.includes("stroke")
     ) {
-        department = "neurology";
+        department = "neurologist";
     }
 
     // General Medicine
@@ -286,7 +283,7 @@ function analyzeSymptoms() {
         text.includes("cough") ||
         text.includes("body pain")
     ) {
-        department = "general medicine";
+        department = "general physician";
     }
 
     // Dermatology
@@ -344,17 +341,14 @@ function analyzeSymptoms() {
     filterDoctors(department);
 }
 
+function filterDoctors(department){
 
-function filterDoctors(department) {
+    console.log("Function Called");
+    console.log("Department =", department);
 
     const select = document.getElementById("doctor_id");
 
-    // Clear dropdown
     select.innerHTML = '<option value="">Select Doctor</option>';
-
-    if (department === "") {
-        return;
-    }
 
     const doctors = [
         {% for doctor in doctors %}
@@ -366,24 +360,21 @@ function filterDoctors(department) {
         {% endfor %}
     ];
 
+    console.log(doctors);
+
     doctors.forEach(function(doc){
+        if(doc.dept.trim() === department.trim()){
 
-        if(doc.dept.trim().toLowerCase() === department.trim().toLowerCase()){
-
-            const option = document.createElement("option");
-
+            let option = document.createElement("option");
             option.value = doc.id;
-            option.textContent = doc.name + " (" + doc.dept.charAt(0).toUpperCase() + doc.dept.slice(1) + ")";
-
+            option.textContent = doc.name + " (" + doc.dept + ")";
             select.appendChild(option);
-        }
 
+        }
     });
 
-    console.log("Department:", department);
-    console.log("Doctors shown:", select.options.length - 1);
+    console.log("Options =", select.options.length);
 }
-
 
 
 // Voice Recognition
@@ -453,17 +444,14 @@ hospitalInput.addEventListener("input", function () {
         });
 
 });
-
-
 window.onload = function () {
 
-    showText();
+    console.log("Page Loaded");
 
-    document.getElementById("reason").addEventListener("keyup", analyzeSymptoms);
+    console.log(document.getElementById("doctor_id"));
+    console.log(document.getElementById("reason"));
 
 };
-
-
 </script>
 </body>
 
