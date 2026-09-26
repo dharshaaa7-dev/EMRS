@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Patients | EMRS</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/doctor_patient.css') }}">
+</head>
+
+<body>
+
+    <div class="dp-page">
+
+        <!-- ================= TOP BAR ================= -->
+
+        <div class="top-bar">
+
+            <div>
+                <h1>Patients</h1>
+                <p class="sub-title">Search a patient by ID and name to view their records</p>
+            </div>
+
+            <a href="{{ url_for('doctor_dashboard') }}" class="back-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back to Dashboard
+            </a>
+
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-msg {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- ================= SEARCH BOX ================= -->
+
+        <form class="search-card" method="POST">
+
+            <div class="form-group">
+                <label>Patient ID</label>
+                <input type="text" name="patient_id" placeholder="e.g. 1" required>
+            </div>
+
+            <div class="form-group">
+                <label>Patient Full Name</label>
+                <input type="text" name="patient_name" placeholder="e.g. Dharshini C" required>
+            </div>
+
+            <button type="submit" class="search-btn">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                Search
+            </button>
+
+        </form>
+
+        {% if patient %}
+
+        <!-- ================= PATIENT DETAILS ================= -->
+
+        <div class="dp-card">
+
+            <h3>Patient Details</h3>
+
+            <div class="detail-grid">
+
+                <div class="detail-box">
+                    <label>Full Name</label>
+                    <p>{{ patient.full_name }}</p>
+                </div>
+
+                <div class="detail-box">
+                    <label>Patient ID</label>
+                    <p>{{ patient.patient_id }}</p>
+                </div>
+
+                <div class="detail-box">
+                    <label>Email</label>
+                    <p>{{ patient.email }}</p>
+                </div>
+
+                <div class="detail-box">
+                    <label>Mobile</label>
+                    <p>{{ patient.mobile }}</p>
+                </div>
+
+                <div class="detail-box">
+                    <label>Date of Birth</label>
+                    <p>{{ patient.dob }}</p>
+                </div>
+
+                <div class="detail-box">
+                    <label>Gender</label>
+                    <p>{{ patient.gender }}</p>
+                </div>
+
+                <div class="detail-box">
+                    <label>Blood Group</label>
+                    <p>{{ patient.blood_group }}</p>
+                </div>
+
+                <div class="detail-box">
+                    <label>Emergency Contact</label>
+                    <p>{{ patient.emergency_name }} — {{ patient.emergency_phone }}</p>
+                </div>
+
+                <div class="detail-box full">
+                    <label>Address</label>
+                    <p>
+                        {{ patient.house_no }}, {{ patient.street }},
+                        {{ patient.city }}, {{ patient.district }},
+                        {{ patient.state }} - {{ patient.pincode }}
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ================= MEDICAL RECORDS ================= -->
+
+        <div class="dp-card">
+
+            <h3>Medical Records</h3>
+
+            {% if medical_records %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Visit Date</th>
+                                <th>Doctor</th>
+                                <th>Diagnosis</th>
+                                <th>Symptoms</th>
+                                <th>Treatment</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in medical_records %}
+                            <tr>
+                                <td>{{ record.visit_date }}</td>
+                                <td>Dr. {{ record.doctor_name }} ({{ record.specialization }})</td>
+                                <td>{{ record.diagnosis }}</td>
+                                <td>{{ record.symptoms }}</td>
+                                <td>{{ record.treatment }}</td>
+                                <td>{{ record.doctor_notes }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="empty-line">No medical records found.</p>
+            {% endif %}
+
+        </div>
+
+        <!-- ================= PRESCRIPTIONS ================= -->
+
+        <div class="dp-card">
+
+            <h3>Prescriptions</h3>
+
+            {% if prescriptions %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Doctor</th>
+                                <th>Medicine</th>
+                                <th>Dosage</th>
+                                <th>Frequency</th>
+                                <th>Duration</th>
+                                <th>Instructions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pres in prescriptions %}
+                            <tr>
+                                <td>{{ pres.prescribed_date }}</td>
+                                <td>Dr. {{ pres.doctor_name }}</td>
+                                <td>{{ pres.medicine_name }}</td>
+                                <td>{{ pres.dosage }}</td>
+                                <td>{{ pres.frequency }}</td>
+                                <td>{{ pres.duration }}</td>
+                                <td>{{ pres.instructions }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="empty-line">No prescriptions found.</p>
+            {% endif %}
+
+        </div>
+
+        <!-- ================= LAB REPORTS ================= -->
+
+        <div class="dp-card">
+
+            <h3>Lab Reports</h3>
+
+            {% if lab_reports %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Visit Date</th>
+                                <th>Test Name</th>
+                                <th>Test Code</th>
+                                <th>Clinic</th>
+                                <th>Report</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in lab_reports %}
+                            <tr>
+                                <td>{{ report.visit_date }}</td>
+                                <td>{{ report.test_name }}</td>
+                                <td>{{ report.test_code }}</td>
+                                <td>{{ report.clinic_name }}</td>
+                                <td>
+                                    <a href="{{ url_for('static', filename=report.report_pdf) }}"
+                                       target="_blank" class="view-link">
+                                        <i class="fa-solid fa-file-pdf"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="empty-line">No lab reports found.</p>
+            {% endif %}
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+    <footer class="footer">
+        © 2026 EMRS | Electronic Medical Record System
+    </footer>
+
+</body>
+
+</html>

@@ -26,37 +26,32 @@
 
     <div class="menu">
 
-        <a href="#" class="active">
+        <a href="{{ url_for('admin_dashboard') }}" class="active">
             <i class="fa-solid fa-house"></i>
             Dashboard
         </a>
 
-        <a href="#">
+        <a href="{{ url_for('admin_patient') }}">
             <i class="fa-solid fa-users"></i>
-            Patients
+            <span>Patients</span>
         </a>
 
-        <a href="#">
+        <a href="{{ url_for('admin_doctor') }}">
             <i class="fa-solid fa-user-doctor"></i>
-            Doctors
+            Doctor
         </a>
 
-        <a href="#">
+        <a href="{{ url_for('admin_appointments') }}">
             <i class="fa-solid fa-calendar-check"></i>
             Appointments
         </a>
 
-        <a href="#">
-            <i class="fa-solid fa-file-medical"></i>
-            Medical Records
+        <a href="{{ url_for('admin_lab_reports') }}">
+            <i class="fa-solid fa-flask-vial"></i>
+            Lab Reports
         </a>
 
-        <a href="#">
-            <i class="fa-solid fa-hospital"></i>
-            Hospital
-        </a>
-
-        <a href="#">
+        <a href="{{ url_for('admin_settings') }}">
             <i class="fa-solid fa-gear"></i>
             Settings
         </a>
@@ -85,25 +80,25 @@
 
         <div class="card">
             <i class="fa-solid fa-users"></i>
-            <h2>150</h2>
+            <h2>{{ total_patients }}</h2>
             <p>Total Patients</p>
         </div>
 
         <div class="card">
             <i class="fa-solid fa-user-doctor"></i>
-            <h2>25</h2>
+            <h2>{{ total_doctors }}</h2>
             <p>Total Doctors</p>
         </div>
 
         <div class="card">
             <i class="fa-solid fa-calendar-check"></i>
-            <h2>48</h2>
+            <h2>{{ appointments }}</h2>
             <p>Appointments</p>
         </div>
 
         <div class="card">
             <i class="fa-solid fa-file-medical"></i>
-            <h2>320</h2>
+            <h2>{{ total_medical_records }}</h2>
             <p>Medical Records</p>
         </div>
 
@@ -112,6 +107,16 @@
     <div class="profile-box">
 
         <h2>Administrator Information</h2>
+
+        <div class="profile-pic-row">
+            <div class="profile-pic">
+                {% if admin.profile_picture %}
+                    <img src="{{ url_for('static', filename=admin.profile_picture) }}" alt="Admin profile picture">
+                {% else %}
+                    <i class="fa-solid fa-user-shield"></i>
+                {% endif %}
+            </div>
+        </div>
 
         <table>
 

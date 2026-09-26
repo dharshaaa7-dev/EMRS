@@ -129,21 +129,23 @@ Book your appointment using Text or Voice.
         id="reason"
         name="reason"
         placeholder="Describe your symptoms..."
-        onkeyup="analyzeSymptoms()"></textarea>
+        onkeyup="scheduleAnalyze()"></textarea>
 </div>
 
 <!-- VOICE -->
 <div id="voiceBox" style="display:none;">
 
     <button type="button" id="startVoice">
-        🎤 Start Voice Typing
+        🎤 Start Voice Typing (Tamil)
     </button>
 
     <p class="note">
-        Speak your symptoms. AI will convert it into text.
+        Tamil la pesunga. AI adha English ku convert panni department kandupidikum.
     </p>
 
     <p id="voiceStatus"></p>
+
+    <p id="tamilHeard" class="note"></p>
 
 </div>
 
@@ -164,15 +166,45 @@ placeholder="AI Suggested Department"
 readonly>
 
 </div>
-<!------------hpspital selection----------->
+
+<!-- ================= Hospital Selection (District -> City -> Hospital) ================= -->
+
+<label class="section-title">
+    <i class="fa-solid fa-hospital"></i>
+    Select Hospital
+</label>
+
+<div class="input-box">
+    <label style="font-weight:normal;">District</label>
+    <select id="hospitalDistrict">
+        <option value="">-- Select District --</option>
+    </select>
+</div>
+
+<div class="input-box">
+    <label style="font-weight:normal;">City</label>
+    <select id="hospitalCity" disabled>
+        <option value="">-- Select City --</option>
+    </select>
+</div>
+
+<div class="input-box" id="hospitalListBox" style="display:none;">
+    <label style="font-weight:normal;">Hospital</label>
+    <select id="hospitalListSelect">
+        <option value="">-- Select Hospital --</option>
+    </select>
+</div>
+
+<p id="hospitalSearchStatus" class="note" style="font-size:12.5px;color:#6b7280;margin:4px 0 10px;"></p>
+
+<!------------hpspital selection (typed / autocomplete fallback)----------->
 <div class="input-box">
     <label>Hospital</label>
     <input
     type="text"
     id="hospital_name"
     name="hospital_name"
-    value="{{ hospital_name }}"
-    readonly>
+    value="{{ hospital_name }}">
 
     <datalist id="hospitalList"></datalist>
 </div>
@@ -247,98 +279,42 @@ function showVoice() {
     document.getElementById("voiceBox").style.display = "block";
 }
 
-function analyzeSymptoms() {
+// ============================================================
+// AI FEATURE: Tamil/English text -> backend translation +
+// department detection (replaces the old local-only keyword check)
+// ============================================================
 
-    let text = document.getElementById("reason").value.toLowerCase().trim();
+let analyzeTimer = null;
 
-    let department = "";
+function scheduleAnalyze() {
+    // debounce so we don't call the backend on every single keystroke
+    clearTimeout(analyzeTimer);
+    analyzeTimer = setTimeout(() => {
+        const text = document.getElementById("reason").value.trim();
+        if (text.length >= 3) {
+            analyzeSymptoms(text);
+        }
+    }, 600);
+}
 
-    // Cardiology
-    if (
-        text.includes("heart") ||
-        text.includes("chest") ||
-        text.includes("bp") ||
-        text.includes("blood pressure") ||
-        text.includes("cardiac")
-    ) {
-        department = "cardiologist";
-    }
+function analyzeSymptoms(text) {
 
-    // Neurology
-    else if (
-        text.includes("head") ||
-        text.includes("headache") ||
-        text.includes("brain") ||
-        text.includes("migraine") ||
-        text.includes("fits") ||
-        text.includes("stroke")
-    ) {
-        department = "neurologist";
-    }
+    fetch("/api/analyze_symptom", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: text })
+    })
+    .then(res => res.json())
+    .then(data => {
 
-    // General Medicine
-    else if (
-        text.includes("fever") ||
-        text.includes("cold") ||
-        text.includes("cough") ||
-        text.includes("body pain")
-    ) {
-        department = "general physician";
-    }
+        if (data.error) return;
 
-    // Dermatology
-    else if (
-        text.includes("skin") ||
-        text.includes("rash") ||
-        text.includes("allergy")
-    ) {
-        department = "dermatology";
-    }
+        document.getElementById("department").value =
+            data.department.charAt(0).toUpperCase() + data.department.slice(1);
 
-    // Orthopedics
-    else if (
-        text.includes("bone") ||
-        text.includes("leg pain") ||
-        text.includes("joint") ||
-        text.includes("back pain")
-    ) {
-        department = "orthopedics";
-    }
-
-    // Gastroenterology
-    else if (
-        text.includes("stomach") ||
-        text.includes("gas") ||
-        text.includes("vomit") ||
-        text.includes("ulcer")
-    ) {
-        department = "gastroenterology";
-    }
-
-    // ENT
-    else if (
-        text.includes("ear") ||
-        text.includes("nose") ||
-        text.includes("throat")
-    ) {
-        department = "ent";
-    }
-
-    // Ophthalmology
-    else if (
-        text.includes("eye") ||
-        text.includes("vision") ||
-        text.includes("blur")
-    ) {
-        department = "ophthalmology";
-    }
-
-    document.getElementById("department").value =
-        department === ""
-            ? ""
-            : department.charAt(0).toUpperCase() + department.slice(1);
-
-    filterDoctors(department);
+        filterDoctors(data.department);
+    })
+    .catch(err => console.error("Analyze failed:", err));
 }
 
 function filterDoctors(department){
@@ -350,61 +326,154 @@ function filterDoctors(department){
 
     select.innerHTML = '<option value="">Select Doctor</option>';
 
-    const doctors = [
-        {% for doctor in doctors %}
-        {
-            id: "{{ doctor.doctor_id }}",
-            name: "{{ doctor.full_name }}",
-            dept: "{{ doctor.specialization|lower }}"
-        },
-        {% endfor %}
-    ];
+    // If a hospital has been selected, only show doctors that belong to
+    // THAT hospital. Otherwise fall back to every registered doctor
+    // (old behaviour, e.g. before a hospital is chosen).
+    const pool = (currentHospitalDoctors.length > 0)
+        ? currentHospitalDoctors
+        : allDoctorsFallback;
 
-    console.log(doctors);
+    console.log(pool);
 
-    doctors.forEach(function(doc){
+    let matches = 0;
+
+    pool.forEach(function(doc){
         if(doc.dept.trim() === department.trim()){
 
             let option = document.createElement("option");
             option.value = doc.id;
             option.textContent = doc.name + " (" + doc.dept + ")";
             select.appendChild(option);
+            matches++;
 
         }
     });
 
+    if (matches === 0 && currentHospitalDoctors.length > 0) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "No " + department + " available at this hospital";
+        select.appendChild(option);
+    }
+
     console.log("Options =", select.options.length);
 }
 
+// Full doctor list rendered by the server (fallback, used only before a
+// specific hospital has been chosen).
+const allDoctorsFallback = [
+    {% for doctor in doctors %}
+    {
+        id: "{{ doctor.doctor_id }}",
+        name: "{{ doctor.full_name }}",
+        dept: "{{ doctor.specialization|lower }}"
+    },
+    {% endfor %}
+];
 
-// Voice Recognition
+// Doctors belonging to the hospital the patient has currently selected.
+// Populated by fetchDoctorsForHospital() below.
+let currentHospitalDoctors = [];
+
+function fetchDoctorsForHospital(hospitalName) {
+
+    if (!hospitalName) {
+        currentHospitalDoctors = [];
+        return;
+    }
+
+    fetch("/api/get_doctors_by_hospital?hospital_name=" + encodeURIComponent(hospitalName))
+        .then(res => res.json())
+        .then(doctors => {
+
+            currentHospitalDoctors = doctors.map(d => ({
+                id: d.doctor_id,
+                name: d.full_name,
+                dept: (d.specialization || "").toLowerCase()
+            }));
+
+            // Re-apply whatever department is currently shown, now
+            // scoped to this hospital's doctors.
+            const dept = document.getElementById("department").value.toLowerCase();
+            if (dept) {
+                filterDoctors(dept);
+            } else if (currentHospitalDoctors.length > 0) {
+                // No department detected yet -- show every doctor at
+                // this hospital so the patient can still pick one.
+                const select = document.getElementById("doctor_id");
+                select.innerHTML = '<option value="">Select Doctor</option>';
+                currentHospitalDoctors.forEach(doc => {
+                    const option = document.createElement("option");
+                    option.value = doc.id;
+                    option.textContent = doc.name + " (" + doc.dept + ")";
+                    select.appendChild(option);
+                });
+            }
+        })
+        .catch(err => console.error("Could not load doctors for hospital:", err));
+}
+
+
+// ============================================================
+// Voice Recognition -- Tamil ('ta-IN') instead of English
+// Captured Tamil speech -> sent to /api/analyze_symptom which
+// translates it to English and detects the department.
+// ============================================================
+
 if ('webkitSpeechRecognition' in window) {
 
     const recognition = new webkitSpeechRecognition();
 
-    recognition.lang = "en-IN";
+    recognition.lang = "ta-IN";   // Tamil voice input
     recognition.continuous = false;
     recognition.interimResults = false;
 
     document.getElementById("startVoice").onclick = function () {
 
-        document.getElementById("voiceStatus").innerHTML = "🎤 Listening...";
+        document.getElementById("voiceStatus").innerHTML = "🎤 Listening... (Tamil)";
+        document.getElementById("tamilHeard").innerHTML = "";
         recognition.start();
 
     };
 
     recognition.onresult = function (event) {
 
-        let speech = event.results[0][0].transcript;
+        let tamilSpeech = event.results[0][0].transcript;
 
-        showText();
+        document.getElementById("voiceStatus").innerHTML = "✅ Voice Captured, analyzing...";
+        document.getElementById("tamilHeard").innerHTML = "நீங்கள் சொன்னது: " + tamilSpeech;
 
-        document.getElementById("reason").value = speech;
+        fetch("/api/analyze_symptom", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: tamilSpeech })
+        })
+        .then(res => res.json())
+        .then(data => {
 
-        document.getElementById("voiceStatus").innerHTML = "✅ Voice Captured";
+            if (data.error) {
+                document.getElementById("voiceStatus").innerHTML = "❌ " + data.error;
+                return;
+            }
 
-        analyzeSymptoms();
+            // Switch to text view so the patient can see/edit the
+            // English translation before submitting
+            showText();
+            document.querySelector('input[name="mode"][value="text"]').checked = true;
 
+            document.getElementById("reason").value = data.translated_text;
+
+            document.getElementById("department").value =
+                data.department.charAt(0).toUpperCase() + data.department.slice(1);
+
+            filterDoctors(data.department);
+
+            document.getElementById("voiceStatus").innerHTML = "✅ Translated & Department Detected";
+        })
+        .catch(err => {
+            document.getElementById("voiceStatus").innerHTML = "❌ Translation failed";
+            console.error(err);
+        });
     };
 
     recognition.onerror = function (event) {
@@ -414,7 +483,121 @@ if ('webkitSpeechRecognition' in window) {
 
     };
 
+} else {
+    // Browser doesn't support voice recognition at all
+    document.addEventListener("DOMContentLoaded", () => {
+        const btn = document.getElementById("startVoice");
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = "🎤 Voice not supported in this browser";
+        }
+    });
 }
+
+
+// ============================================================
+// AI FEATURE: District -> City -> Hospital cascading search
+// ============================================================
+
+window.addEventListener("DOMContentLoaded", () => {
+    fetch("/api/get_districts")
+        .then(res => res.json())
+        .then(districts => {
+            const districtSelect = document.getElementById("hospitalDistrict");
+            districts.forEach(d => {
+                const opt = document.createElement("option");
+                opt.value = d;
+                opt.textContent = d;
+                districtSelect.appendChild(opt);
+            });
+        })
+        .catch(err => console.error("Could not load districts:", err));
+});
+
+document.getElementById("hospitalDistrict").addEventListener("change", function () {
+
+    const district = this.value;
+    const citySelect = document.getElementById("hospitalCity");
+    citySelect.innerHTML = '<option value="">-- Select City --</option>';
+    citySelect.disabled = true;
+
+    document.getElementById("hospitalListBox").style.display = "none";
+
+    if (!district) return;
+
+    fetch(`/api/get_cities/${district}`)
+        .then(res => res.json())
+        .then(cities => {
+            cities.forEach(c => {
+                const opt = document.createElement("option");
+                opt.value = c;
+                opt.textContent = c;
+                citySelect.appendChild(opt);
+            });
+            citySelect.disabled = false;
+
+            if (cities.length === 0) {
+                citySelect.innerHTML = '<option value="">No hospitals registered here yet</option>';
+                citySelect.disabled = true;
+            }
+        });
+});
+
+document.getElementById("hospitalCity").addEventListener("change", function () {
+
+    const city = this.value;
+    const district = document.getElementById("hospitalDistrict").value;
+    const hospitalListBox = document.getElementById("hospitalListBox");
+    const hospitalListSelect = document.getElementById("hospitalListSelect");
+    const statusEl = document.getElementById("hospitalSearchStatus");
+
+    hospitalListSelect.innerHTML = '<option value="">-- Select Hospital --</option>';
+    statusEl.textContent = "";
+
+    if (!city) {
+        hospitalListBox.style.display = "none";
+        return;
+    }
+
+    statusEl.textContent = "Searching hospitals in " + city + "...";
+
+    fetch(`/api/get_hospitals_by_location?district=${encodeURIComponent(district)}&city=${encodeURIComponent(city)}`)
+        .then(res => res.json())
+        .then(hospitals => {
+
+            if (hospitals.length === 0) {
+                hospitalListBox.style.display = "none";
+                statusEl.textContent = "No hospitals registered in " + city + " yet. Type the hospital name manually below.";
+                return;
+            }
+
+            hospitals.forEach(h => {
+                const opt = document.createElement("option");
+                opt.value = h.hospital_name;
+                opt.textContent = h.hospital_name;
+                hospitalListSelect.appendChild(opt);
+            });
+
+            hospitalListBox.style.display = "block";
+            statusEl.textContent = hospitals.length + " hospital(s) found in " + city + ".";
+        })
+        .catch(err => {
+            console.error("Hospital search failed:", err);
+            hospitalListBox.style.display = "none";
+            statusEl.textContent = "Could not load hospitals right now. Type the hospital name manually below.";
+        });
+});
+
+// Selecting a hospital from the district/city list fills the actual
+// hospital_name field that gets submitted with the form, and loads that
+// hospital's doctors so the Select Doctor list is scoped correctly.
+document.getElementById("hospitalListSelect").addEventListener("change", function () {
+    if (this.value) {
+        document.getElementById("hospital_name").value = this.value;
+        fetchDoctorsForHospital(this.value);
+    }
+});
+
 const hospitalInput = document.getElementById("hospital_name");
 const hospitalList = document.getElementById("hospitalList");
 
@@ -443,6 +626,14 @@ hospitalInput.addEventListener("input", function () {
 
         });
 
+});
+
+// When the patient finishes typing/picks a value in the manual hospital
+// box (autocomplete fallback), load that hospital's doctors too.
+hospitalInput.addEventListener("change", function () {
+    if (this.value.trim()) {
+        fetchDoctorsForHospital(this.value.trim());
+    }
 });
 window.onload = function () {
 

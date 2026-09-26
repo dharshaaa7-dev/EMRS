@@ -1,0 +1,206 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+body {
+  background: #10222c;
+  min-height: 100vh;
+}
+
+/* ---------- Main content ---------- */
+.main-content {
+  padding: 40px 60px;
+  width: 100%;
+}
+
+/* ---------- Top bar / back button ---------- */
+.top-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.btn-back {
+  background: #2f8fc4;
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.btn-back:hover {
+  background: #257aa8;
+}
+
+.card {
+  background: #16303e;
+  border-radius: 14px;
+  padding: 30px 35px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.card h1 {
+  color: #ffffff;
+  font-size: 26px;
+  margin-bottom: 20px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ---------- Search form ---------- */
+.search-form {
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  color: #7fc4e8;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.form-group input {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #274a5c;
+  background: #0e222c;
+  color: #fff;
+  min-width: 220px;
+  font-size: 14px;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #3fb6e8;
+}
+
+.btn-primary {
+  background: #2f8fc4;
+  color: #fff;
+  border: none;
+  padding: 11px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.btn-primary:hover {
+  background: #257aa8;
+}
+
+.btn-edit {
+  background: #3fb6e8;
+  color: #0e222c;
+  text-decoration: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.btn-edit:hover {
+  background: #63c8f0;
+}
+
+/* ---------- Info grid ---------- */
+.info-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid #1f3f4f;
+}
+
+.info-row .label {
+  color: #3fb6e8;
+  font-weight: 700;
+  width: 220px;
+}
+
+.info-row .value {
+  color: #ffffff;
+  flex: 1;
+}
+
+/* ---------- Stats ---------- */
+.stats-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  background: #16303e;
+  border-radius: 14px;
+  padding: 25px;
+  flex: 1;
+  min-width: 180px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.stat-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.stat-number {
+  font-size: 30px;
+  font-weight: 800;
+  color: #3fb6e8;
+}
+
+.stat-label {
+  color: #cfe8f5;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.not-found {
+  color: #f0a860;
+  font-weight: 600;
+}
+
+/* ---------- Edit form (vertical layout) ---------- */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 500px;
+  margin-top: 15px;
+}
+
+.edit-form .form-group input {
+  width: 100%;
+  min-width: unset;
+}
+
+.edit-form .btn-primary {
+  align-self: flex-start;
+  margin-top: 10px;
+}

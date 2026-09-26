@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -15,13 +16,14 @@
 
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
 </head>
 
 <body>
 
 <div class="dashboard">
 
-    <!-- ================= Sidebar ================= -->
+    <!-- Sidebar -->
 
     <aside class="sidebar">
 
@@ -34,42 +36,42 @@
         <ul>
 
             <li class="active">
-                <a href="#">
+                <a href="{{ url_for('doctor_dashboard') }}">
                     <i class="fa-solid fa-house"></i>
                     <span>Dashboard</span>
                 </a>
             </li>
 
             <li>
-                <a href="#appointments">
+                <a href="{{ url_for('doctor_appointments') }}">
                     <i class="fa-solid fa-calendar-check"></i>
                     <span>Appointments</span>
                 </a>
             </li>
 
             <li>
-                <a href="#patients">
+                <a href="{{ url_for('doctor_patient') }}">
                     <i class="fa-solid fa-user-group"></i>
                     <span>Patients</span>
                 </a>
             </li>
 
             <li>
-                <a href="#">
+                <a href="{{ url_for('doctor_prescription') }}">
                     <i class="fa-solid fa-file-medical"></i>
                     <span>Prescriptions</span>
                 </a>
             </li>
 
             <li>
-                <a href="#">
+                <a href="{{ url_for('doctor_md_records') }}">
                     <i class="fa-solid fa-notes-medical"></i>
                     <span>Medical Records</span>
                 </a>
             </li>
 
             <li>
-                <a href="#">
+                <a href="{{ url_for('doctor_settings') }}">
                     <i class="fa-solid fa-gear"></i>
                     <span>Settings</span>
                 </a>
@@ -86,26 +88,33 @@
 
     </aside>
 
-    <!-- ================= Main Content ================= -->
+    <!-- Main -->
 
     <main class="main-content">
 
-        <!-- ================= Header ================= -->
+        <!-- Header (merged welcome + profile, no duplicate name) -->
 
         <header class="topbar">
 
+            <div class="profile-image">
+                {% if session.get('doctor_photo') %}
+                    <img src="{{ url_for('static', filename=session['doctor_photo']) }}"
+                         alt="Dr. {{ session.get('doctor_name','Doctor') }}">
+                {% else %}
+                    <i class="fa-solid fa-user-doctor"></i>
+                {% endif %}
+            </div>
+
             <div class="header-left">
 
-                <span class="welcome">
-                    👋 Welcome
-                </span>
+                <span class="welcome">👋 Welcome</span>
 
                 <h1>
                     Dr. {{ session.get('doctor_name','Doctor') }}
                 </h1>
 
                 <p>
-                    Electronic Medical Record System
+                    {{ session.get('specialization','General Physician') }}
                 </p>
 
             </div>
@@ -116,95 +125,44 @@
 
         </header>
 
-        <!-- ================= Dashboard Box ================= -->
+        <!-- Statistics -->
 
         <section class="dashboard-box">
-
-            <!-- ================= Doctor Profile ================= -->
-
-            <section class="doctor-info">
-
-                <div class="profile-card">
-
-                    <div class="profile-image">
-                        <i class="fa-solid fa-user-doctor"></i>
-                    </div>
-
-                    <div class="profile-info">
-                        <h2>
-                            Dr. {{ session.get('doctor_name','Doctor') }}
-                        </h2>
-
-                        <p>
-                            {{ session.get('specialization','General Physician') }}
-                        </p>
-
-                        <span>
-                            Electronic Medical Record System
-                        </span>
-                    </div>
-
-                </div>
-
-            </section>
-
-            <!-- ================= Statistics ================= -->
 
             <section class="stats">
 
                 <div class="card blue">
-
                     <i class="fa-solid fa-user-group"></i>
-
-                    <h2>
-                        {{ total_patients if total_patients is defined else appointments|length }}
-                    </h2>
-
+                    <h2>{{ total_patients if total_patients is defined else appointments|length }}</h2>
                     <p>Total Patients</p>
-
                 </div>
 
                 <div class="card green">
-
                     <i class="fa-solid fa-calendar-check"></i>
-
-                    <h2>
-                        {{ appointments|length }}
-                    </h2>
-
+                    <h2>{{ appointments|length }}</h2>
                     <p>Total Appointments</p>
-
                 </div>
 
                 <div class="card orange">
-
                     <i class="fa-solid fa-hourglass-half"></i>
-
-                    <h2>
-                        {{ pending_count if pending_count is defined else 0 }}
-                    </h2>
-
+                    <h2>{{ pending_count if pending_count is defined else 0 }}</h2>
                     <p>Pending Approval</p>
-
                 </div>
 
                 <div class="card purple">
-
                     <i class="fa-solid fa-circle-check"></i>
-
-                    <h2>
-                        {{ approved_count if approved_count is defined else 0 }}
-                    </h2>
-
+                    <h2>{{ approved_count if approved_count is defined else 0 }}</h2>
                     <p>Approved Appointments</p>
-
                 </div>
 
             </section>
 
         </section>
 
-        <!-- ================= Appointment Section ================= -->
+        <!-- Appointment Table -->
+        <!-- Approved appointments are cleared from this list once approved -->
+
+        {% set visible_appointments = appointments|rejectattr("status","equalto","Approved")|list %}
 
         <section class="appointment-wrapper">
 
@@ -220,116 +178,112 @@
                     <thead>
 
                         <tr>
+
                             <th>Appointment ID</th>
                             <th>Patient</th>
                             <th>Date</th>
                             <th>Time</th>
                             <th>Status</th>
                             <th>Action</th>
+
                         </tr>
 
                     </thead>
 
                     <tbody>
-                                            {% if appointments %}
 
-                            {% for appointment in appointments %}
+                    {% if visible_appointments %}
 
-                            <tr>
+                    {% for appointment in visible_appointments %}
 
-                                <td>{{ appointment.appointment_id }}</td>
+                    <tr>
 
-                                <td>{{ appointment.patient_name }}</td>
+                        <td>{{ appointment.appointment_id }}</td>
 
-                                <td>{{ appointment.appointment_date }}</td>
+                        <td>{{ appointment.patient_name }}</td>
 
-                                <td>{{ appointment.appointment_time }}</td>
+                        <td>{{ appointment.appointment_date }}</td>
 
-                                <td>
+                        <td>{{ appointment.appointment_time }}</td>
 
-                                    {% if appointment.status == "Approved" %}
+                        <td>
 
-                                        <span class="approved-badge">
-                                            <i class="fa-solid fa-circle-check"></i>
-                                            Approved
-                                        </span>
+                            {% if appointment.status == "Rejected" %}
 
-                                    {% elif appointment.status == "Rejected" %}
+                                <span class="rejected-badge">
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                    Rejected
+                                </span>
 
-                                        <span class="rejected-badge">
-                                            <i class="fa-solid fa-circle-xmark"></i>
-                                            Rejected
-                                        </span>
+                            {% else %}
 
-                                    {% else %}
+                                <span class="pending">
+                                    <i class="fa-solid fa-clock"></i>
+                                    Pending
+                                </span>
 
-                                        <span class="pending">
-                                            <i class="fa-solid fa-clock"></i>
-                                            Pending
-                                        </span>
+                            {% endif %}
 
-                                    {% endif %}
+                        </td>
 
-                                </td>
+                        <!-- Approve / Reject -->
 
-                                <td>
+                        <td>
 
-                                    {% if appointment.status == "Pending" %}
+                            {% if appointment.status == "Pending" %}
 
-                                        <a href="{{ url_for('approve', id=appointment.appointment_id) }}"
-                                           class="approve-btn">
-                                            <i class="fa-solid fa-check"></i>
-                                            Approve
-                                        </a>
+                                <a href="{{ url_for('approve', id=appointment.appointment_id) }}"
+                                   class="approve-btn">
 
-                                        <a href="{{ url_for('reject', id=appointment.appointment_id) }}"
-                                           class="reject-btn">
-                                            <i class="fa-solid fa-xmark"></i>
-                                            Reject
-                                        </a>
+                                    <i class="fa-solid fa-check"></i>
+                                    Approve
 
-                                    {% elif appointment.status == "Approved" %}
+                                </a>
 
-                                        <span class="approved-badge">
-                                            Done
-                                        </span>
+                                <a href="{{ url_for('reject', id=appointment.appointment_id) }}"
+                                   class="reject-btn">
 
-                                    {% else %}
+                                    <i class="fa-solid fa-xmark"></i>
+                                    Reject
 
-                                        <span class="rejected-badge">
-                                            Rejected
-                                        </span>
+                                </a>
 
-                                    {% endif %}
+                            {% else %}
 
-                                </td>
+                                <span class="rejected-badge">
+                                    Rejected
+                                </span>
 
-                            </tr>
+                            {% endif %}
 
-                            {% endfor %}
+                        </td>
 
-                        {% else %}
+                    </tr>
 
-                            <tr>
+                    {% endfor %}
 
-                                <td colspan="6">
+                    {% else %}
 
-                                    <div style="padding:40px;text-align:center;">
+                    <tr>
 
-                                        <i class="fa-solid fa-calendar-xmark"
-                                           style="font-size:55px;color:#8ecfff;"></i>
+                        <td colspan="6">
 
-                                        <h3 style="margin-top:20px;">
-                                            No Appointments Found
-                                        </h3>
+                            <div style="padding:40px;text-align:center;">
 
-                                    </div>
+                                <i class="fa-solid fa-calendar-xmark"
+                                   style="font-size:55px;color:#8ecfff;"></i>
 
-                                </td>
+                                <h3 style="margin-top:20px;">
+                                    No Appointments Found
+                                </h3>
 
-                            </tr>
+                            </div>
 
-                        {% endif %}
+                        </td>
+
+                    </tr>
+
+                    {% endif %}
 
                     </tbody>
 
@@ -339,10 +293,10 @@
 
         </section>
 
-        <!-- ================= Footer ================= -->
-
         <footer class="footer">
+
             <p>© 2026 EMRS - Electronic Medical Record System</p>
+
         </footer>
 
     </main>
@@ -356,20 +310,22 @@ function updateClock(){
     const now = new Date();
 
     document.getElementById("clock").textContent =
-        now.toLocaleTimeString("en-IN",{
-            hour:"2-digit",
-            minute:"2-digit",
-            second:"2-digit",
-            hour12:true
-        });
+    now.toLocaleTimeString("en-IN",{
+
+        hour:"2-digit",
+        minute:"2-digit",
+        second:"2-digit",
+        hour12:true
+
+    });
 
 }
 
 updateClock();
+
 setInterval(updateClock,1000);
 
 </script>
 
 </body>
-
 </html>

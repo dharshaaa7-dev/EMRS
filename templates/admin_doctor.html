@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EMRS - Doctor Details</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_doctor.css') }}">
+</head>
+<body>
+
+  <div class="main-content">
+
+    <div class="top-bar">
+      <a href="{{ url_for('admin_dashboard') }}" class="btn-back">⬅ Back to Dashboard</a>
+    </div>
+
+    <div class="card search-card">
+      <h1>Doctor Lookup</h1>
+      <form method="POST" action="{{ url_for('admin_doctor') }}" class="search-form">
+        <div class="form-group">
+          <label>Doctor ID</label>
+          <input type="text" name="doctor_id" placeholder="e.g. 1" value="{{ request.form.get('doctor_id','') }}">
+        </div>
+        <div class="form-group">
+          <label>Doctor Name</label>
+          <input type="text" name="doctor_name" placeholder="e.g. Ramesh Kumar" value="{{ request.form.get('doctor_name','') }}">
+        </div>
+        <button type="submit" class="btn-primary">🔍 Search</button>
+      </form>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <p class="not-found">{{ message }}</p>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    {% if doctor %}
+    <div class="card">
+      <div class="card-header">
+        <h1>Doctor Information</h1>
+        <a href="{{ url_for('admin_doctor_edit', doctor_id=doctor.doctor_id) }}" class="btn-edit">✏️ Edit</a>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-row"><span class="label">Full Name</span><span class="value">{{ doctor.full_name }}</span></div>
+        <div class="info-row"><span class="label">Doctor ID</span><span class="value">{{ doctor.doctor_id }}</span></div>
+        <div class="info-row"><span class="label">Username</span><span class="value">{{ doctor.username }}</span></div>
+        <div class="info-row"><span class="label">Email</span><span class="value">{{ doctor.email }}</span></div>
+        <div class="info-row"><span class="label">Mobile</span><span class="value">{{ doctor.mobile }}</span></div>
+        <div class="info-row"><span class="label">Specialization</span><span class="value">{{ doctor.specialization }}</span></div>
+        <div class="info-row"><span class="label">Qualification</span><span class="value">{{ doctor.qualification }}</span></div>
+        <div class="info-row"><span class="label">License No</span><span class="value">{{ doctor.license_no }}</span></div>
+        <div class="info-row"><span class="label">Hospital</span><span class="value">{{ doctor.hospital_name }}</span></div>
+        <div class="info-row"><span class="label">City</span><span class="value">{{ doctor.hospital_city }}</span></div>
+        <div class="info-row"><span class="label">District</span><span class="value">{{ doctor.hospital_district }}</span></div>
+        <div class="info-row"><span class="label">State</span><span class="value">{{ doctor.hospital_state }}</span></div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-number">{{ patient_count }}</div>
+        <div class="stat-label">Patients Handled</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📋</div>
+        <div class="stat-number">{{ appointment_count }}</div>
+        <div class="stat-label">Total Appointments</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-number">{{ completed_count }}</div>
+        <div class="stat-label">Completed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-number">{{ pending_count }}</div>
+        <div class="stat-label">Pending</div>
+      </div>
+    </div>
+
+    {% endif %}
+
+  </div>
+
+</body>
+</html>

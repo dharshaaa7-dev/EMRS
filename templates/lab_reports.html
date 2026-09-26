@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Reports | EMRS</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/lab_reports.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>
+            <i class="fa-solid fa-flask-vial"></i>
+            Laboratory Reports
+        </h1>
+
+        <p>Electronic Medical Record System</p>
+    </div>
+
+    {% if reports %}
+
+    <div class="card">
+        <div class="table-box">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Patient Name</th>
+                        <th>Patient ID</th>
+                        <th>Patient Number</th>
+                        <th>Visit Date</th>
+                        <th>Test Name</th>
+                        <th>Test Code</th>
+                        <th>Lab Staff</th>
+                        <th>Clinic</th>
+                        <th>Clinic No</th>
+                        <th>Report PDF</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                    <tr>
+                        <td>{{ report.patient_name }}</td>
+                        <td>{{ report.patient_id }}</td>
+                        <td>{{ report.patient_number }}</td>
+                        <td>{{ report.visit_date }}</td>
+                        <td>{{ report.test_name }}</td>
+                        <td>{{ report.test_code }}</td>
+                        <td>{{ report.laboratory_staff_name }}</td>
+                        <td>{{ report.clinic_name }}</td>
+                        <td>{{ report.clinic_number }}</td>
+                        <td>
+                            {% if report.report_pdf %}
+                                <a href="{{ url_for('static', filename=report.report_pdf) }}"
+                                   target="_blank" class="download-btn">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                    View PDF
+                                </a>
+                            {% else %}
+                                No PDF Uploaded
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% else %}
+
+    <div class="card no-data">
+        <i class="fa-solid fa-file-circle-xmark"></i>
+        <h2>No Lab Reports Found</h2>
+        <p>No laboratory reports have been uploaded yet.</p>
+    </div>
+
+    {% endif %}
+
+    <a href="{{ url_for('patient_dashboard') }}" class="back-btn">
+        <i class="fa-solid fa-arrow-left"></i>
+        Back to Dashboard
+    </a>
+
+</div>
+
+</body>
+</html>

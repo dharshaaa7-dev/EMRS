@@ -1,0 +1,250 @@
+/* ================= DOCTOR APPOINTMENTS PAGE (standalone) ================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+}
+
+body {
+    background: #4f86c9;
+    color: #1a2b4a;
+}
+
+.appt-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 30px 24px 60px;
+}
+
+/* ---------------- Top bar ---------------- */
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.top-bar h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #0f2a5e;
+}
+
+.top-bar .sub-title {
+    color: #020b1a;
+    font-size: 16px;
+    margin-top: 4px;
+}
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    color: #1a5fd0;
+    border: 1px solid #cfe2ff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+}
+
+.back-btn:hover {
+    background: #eaf3ff;
+}
+
+/* ---------------- Flash messages ---------------- */
+
+.flash-msg {
+    padding: 12px 18px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.flash-msg.success {
+    background: #d9f7e5;
+    color: #157347;
+}
+
+.flash-msg.danger {
+    background: #fde2e2;
+    color: #b02a2a;
+}
+
+/* ---------------- Stat cards ---------------- */
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 26px;
+}
+
+.stat-card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 8px 20px rgba(10, 23, 80, 0.08);
+}
+
+.stat-card i {
+    font-size: 26px;
+    margin-bottom: 8px;
+}
+
+.stat-card h2 {
+    font-size: 24px;
+    color: #0f2a5e;
+}
+
+.stat-card p {
+    color: #6b7a90;
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.stat-card.blue i { color: #1a5fd0; }
+.stat-card.orange i { color: #e08a1a; }
+.stat-card.green i { color: #1a9c5b; }
+.stat-card.red i { color: #d0341a; }
+
+/* ---------------- Table card ---------------- */
+
+.appt-card {
+    background: #eaf3ff;
+    border-radius: 14px;
+    padding: 10px 16px;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+thead th {
+    text-align: left;
+    padding: 14px 12px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #1a3a6b;
+}
+
+tbody tr {
+    background: #ffffff;
+}
+
+tbody tr:nth-child(even) {
+    background: #f7fbff;
+}
+
+tbody td {
+    padding: 14px 12px;
+    font-size: 14px;
+    border-bottom: 1px solid #eaf1fb;
+}
+
+/* ---------------- Badges ---------------- */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge.approved {
+    background: #d9f7e5;
+    color: #157347;
+}
+
+.badge.rejected {
+    background: #fde2e2;
+    color: #b02a2a;
+}
+
+.badge.pending {
+    background: #fff3d6;
+    color: #a06a00;
+}
+
+/* ---------------- Action buttons ---------------- */
+
+.approve-btn,
+.reject-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    margin-right: 6px;
+}
+
+.approve-btn {
+    background: #1a9c5b;
+    color: #fff;
+}
+
+.reject-btn {
+    background: #d0341a;
+    color: #fff;
+}
+
+.muted {
+    color: #9aa7ba;
+}
+
+/* ---------------- Empty state ---------------- */
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+}
+
+.empty-state i {
+    font-size: 50px;
+    color: #8ecfff;
+}
+
+.empty-state h3 {
+    margin-top: 16px;
+    color: #1a3a6b;
+}
+
+/* ---------------- Footer ---------------- */
+
+.footer {
+    text-align: center;
+    padding: 18px;
+    color: #8494ab;
+    font-size: 13px;
+}
+
+/* ---------------- Responsive ---------------- */
+
+@media (max-width: 700px) {
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .top-bar {
+        flex-direction: column;
+        gap: 14px;
+    }
+}

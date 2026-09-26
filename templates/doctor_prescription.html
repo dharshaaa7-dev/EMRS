@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Prescriptions | EMRS</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/doctor_prescription.css') }}">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- Main -->
+
+    <main class="main-content">
+
+        <!-- Header -->
+
+        <header class="topbar">
+
+            <div class="header-left">
+                <span class="welcome">💊 Prescriptions</span>
+                <h1>Add &amp; Manage Prescriptions</h1>
+                <p>Electronic Medical Record System</p>
+            </div>
+
+            <a href="{{ url_for('doctor_dashboard') }}" class="back-btn">
+                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+            </a>
+
+        </header>
+
+        <!-- Flash Messages -->
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-wrap">
+                    {% for category, message in messages %}
+                        <div class="flash-msg {{ category }}">
+                            <i class="fa-solid fa-circle-info"></i> {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Search Patient -->
+
+        <section class="search-box">
+
+            <h2><i class="fa-solid fa-magnifying-glass"></i> Search Patient</h2>
+
+            <form method="POST" class="search-form">
+
+                <input type="hidden" name="action" value="search">
+
+                <div class="form-group">
+                    <label>Patient ID</label>
+                    <input type="text" name="patient_id" placeholder="Enter Patient ID"
+                           value="{{ patient.patient_id if patient else '' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Patient Name</label>
+                    <input type="text" name="patient_name" placeholder="Enter Full Name"
+                           value="{{ patient.full_name if patient else '' }}" required>
+                </div>
+
+                <button type="submit" class="search-btn">
+                    <i class="fa-solid fa-magnifying-glass"></i> Search
+                </button>
+
+            </form>
+
+        </section>
+
+        {% if patient %}
+
+        <!-- Patient Info -->
+
+        <section class="patient-card">
+
+            <div class="patient-avatar">
+                <i class="fa-solid fa-user"></i>
+            </div>
+
+            <div class="patient-info">
+                <h3>{{ patient.full_name }}</h3>
+                <p>Patient ID : {{ patient.patient_id }} &nbsp;|&nbsp;
+                   Mobile : {{ patient.mobile }} &nbsp;|&nbsp;
+                   Blood Group : {{ patient.blood_group or '-' }}</p>
+            </div>
+
+            <button type="button" class="upload-btn" onclick="openAddModal()">
+                <i class="fa-solid fa-file-circle-plus"></i>
+                Add Prescription
+            </button>
+
+        </section>
+
+        <!-- Prescriptions Table -->
+
+        <section class="rx-section">
+
+            <h2><i class="fa-solid fa-file-medical"></i> Prescription History</h2>
+
+            <div class="table-wrap">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Medicine</th>
+                            <th>Dosage</th>
+                            <th>Frequency</th>
+                            <th>Timing</th>
+                            <th>Duration</th>
+                            <th>Instructions</th>
+                            <th>Edit</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% if prescriptions %}
+
+                            {% for rx in prescriptions %}
+
+                            <tr>
+                                <td>{{ rx.prescribed_date }}</td>
+                                <td>{{ rx.medicine_name }}</td>
+                                <td>{{ rx.dosage }}</td>
+                                <td>{{ rx.frequency }}</td>
+                                <td>
+                                    {% if rx.timing %}
+                                        {% for t in rx.timing.split(',') %}
+                                            <span class="timing-badge">{{ t.strip() }}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span style="color:#7fa8cc;">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ rx.duration }}</td>
+                                <td>{{ rx.instructions }}</td>
+                                <td>
+                                    <button type="button" class="edit-btn"
+                                        onclick="openEditModal(
+                                            '{{ rx.prescription_id }}',
+                                            `{{ rx.medicine_name }}`,
+                                            `{{ rx.dosage }}`,
+                                            `{{ rx.frequency }}`,
+                                            `{{ rx.duration }}`,
+                                            `{{ rx.instructions }}`,
+                                            `{{ rx.timing or '' }}`
+                                        )">
+                                        <i class="fa-solid fa-pen"></i> Edit
+                                    </button>
+                                </td>
+                            </tr>
+
+                            {% endfor %}
+
+                        {% else %}
+
+                            <tr>
+                                <td colspan="8">
+                                    <div class="empty-state">
+                                        <i class="fa-solid fa-file-circle-xmark"></i>
+                                        <p>No Prescriptions Found For This Patient</p>
+                                    </div>
+                                </td>
+                            </tr>
+
+                        {% endif %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+        {% endif %}
+
+        <footer class="footer">
+            <p>© 2026 EMRS - Electronic Medical Record System</p>
+        </footer>
+
+    </main>
+
+</div>
+
+<!-- Add Prescription Modal -->
+
+<div class="modal-overlay" id="addModal">
+
+    <div class="modal-box">
+
+        <div class="modal-head">
+            <h3><i class="fa-solid fa-file-circle-plus"></i> Add Prescription</h3>
+            <button type="button" class="close-btn" onclick="closeAddModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form method="POST">
+
+            <input type="hidden" name="action" value="add_prescription">
+            <input type="hidden" name="patient_id" value="{{ patient.patient_id if patient else '' }}">
+            <input type="hidden" name="patient_name" value="{{ patient.full_name if patient else '' }}">
+
+            <div class="modal-grid">
+
+                <div class="form-group">
+                    <label>Medicine Name</label>
+                    <input type="text" name="medicine_name" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Dosage</label>
+                    <input type="text" name="dosage" placeholder="e.g. 500mg" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Frequency</label>
+                    <input type="text" name="frequency" placeholder="e.g. Twice a day" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Duration</label>
+                    <input type="text" name="duration" placeholder="e.g. 5 Days" required>
+                </div>
+
+                <div class="form-group full">
+                    <label>Timing</label>
+                    <div class="timing-options">
+
+                        <label class="timing-check">
+                            <input type="checkbox" name="timing" value="Morning">
+                            <span><i class="fa-solid fa-sun"></i> Morning</span>
+                        </label>
+
+                        <label class="timing-check">
+                            <input type="checkbox" name="timing" value="Afternoon">
+                            <span><i class="fa-solid fa-cloud-sun"></i> Afternoon</span>
+                        </label>
+
+                        <label class="timing-check">
+                            <input type="checkbox" name="timing" value="Night">
+                            <span><i class="fa-solid fa-moon"></i> Night</span>
+                        </label>
+
+                    </div>
+                </div>
+
+                <div class="form-group full">
+                    <label>Instructions</label>
+                    <textarea name="instructions" rows="3" placeholder="e.g. Take after food"></textarea>
+                </div>
+
+            </div>
+
+            <button type="submit" class="upload-btn full-width">
+                <i class="fa-solid fa-upload"></i> Save Prescription
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+<!-- Edit Prescription Modal -->
+
+<div class="modal-overlay" id="editModal">
+
+    <div class="modal-box">
+
+        <div class="modal-head">
+            <h3><i class="fa-solid fa-pen"></i> Edit Prescription</h3>
+            <button type="button" class="close-btn" onclick="closeEditModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form method="POST" id="editForm">
+
+            <input type="hidden" name="action" value="edit_prescription">
+            <input type="hidden" name="patient_id" value="{{ patient.patient_id if patient else '' }}">
+            <input type="hidden" name="patient_name" value="{{ patient.full_name if patient else '' }}">
+            <input type="hidden" name="prescription_id" id="edit_prescription_id">
+
+            <div class="modal-grid">
+
+                <div class="form-group">
+                    <label>Medicine Name</label>
+                    <input type="text" name="medicine_name" id="edit_medicine_name" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Dosage</label>
+                    <input type="text" name="dosage" id="edit_dosage" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Frequency</label>
+                    <input type="text" name="frequency" id="edit_frequency" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Duration</label>
+                    <input type="text" name="duration" id="edit_duration" required>
+                </div>
+
+                <div class="form-group full">
+                    <label>Timing</label>
+                    <div class="timing-options">
+
+                        <label class="timing-check">
+                            <input type="checkbox" name="timing" value="Morning" id="edit_timing_morning">
+                            <span><i class="fa-solid fa-sun"></i> Morning</span>
+                        </label>
+
+                        <label class="timing-check">
+                            <input type="checkbox" name="timing" value="Afternoon" id="edit_timing_afternoon">
+                            <span><i class="fa-solid fa-cloud-sun"></i> Afternoon</span>
+                        </label>
+
+                        <label class="timing-check">
+                            <input type="checkbox" name="timing" value="Night" id="edit_timing_night">
+                            <span><i class="fa-solid fa-moon"></i> Night</span>
+                        </label>
+
+                    </div>
+                </div>
+
+                <div class="form-group full">
+                    <label>Instructions</label>
+                    <textarea name="instructions" id="edit_instructions" rows="3"></textarea>
+                </div>
+
+            </div>
+
+            <button type="submit" class="upload-btn full-width">
+                <i class="fa-solid fa-floppy-disk"></i> Update Prescription
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+
+function openAddModal(){
+    document.getElementById("addModal").classList.add("show");
+}
+function closeAddModal(){
+    document.getElementById("addModal").classList.remove("show");
+}
+
+function openEditModal(id, medicine, dosage, frequency, duration, instructions, timing){
+    document.getElementById("edit_prescription_id").value = id;
+    document.getElementById("edit_medicine_name").value = medicine;
+    document.getElementById("edit_dosage").value = dosage;
+    document.getElementById("edit_frequency").value = frequency;
+    document.getElementById("edit_duration").value = duration;
+    document.getElementById("edit_instructions").value = instructions;
+
+    const timingList = timing ? timing.split(",").map(t => t.trim()) : [];
+    document.getElementById("edit_timing_morning").checked = timingList.includes("Morning");
+    document.getElementById("edit_timing_afternoon").checked = timingList.includes("Afternoon");
+    document.getElementById("edit_timing_night").checked = timingList.includes("Night");
+
+    document.getElementById("editModal").classList.add("show");
+}
+function closeEditModal(){
+    document.getElementById("editModal").classList.remove("show");
+}
+
+</script>
+
+</body>
+</html>

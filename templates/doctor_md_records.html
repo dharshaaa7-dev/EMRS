@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Medical Records | EMRS</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/doctor_dashboard.css') }}">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/doctor_md_records.css') }}">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- Main -->
+
+    <main class="main-content full-width">
+
+        <!-- Back to Dashboard -->
+
+        <div class="back-bar">
+            <a href="{{ url_for('doctor_dashboard') }}" class="back-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back to Dashboard
+            </a>
+        </div>
+
+        <!-- Header -->
+
+        <header class="topbar">
+
+            <div class="profile-image">
+                {% if session.get('doctor_photo') %}
+                    <img src="{{ url_for('static', filename=session['doctor_photo']) }}"
+                         alt="Dr. {{ session.get('doctor_name','Doctor') }}">
+                {% else %}
+                    <i class="fa-solid fa-user-doctor"></i>
+                {% endif %}
+            </div>
+
+            <div class="header-left">
+
+                <span class="welcome">👋 Welcome</span>
+
+                <h1>
+                    Dr. {{ session.get('doctor_name','Doctor') }}
+                </h1>
+
+                <p>
+                    {{ session.get('specialization','General Physician') }}
+                </p>
+
+            </div>
+
+            <div class="clock" id="clock">
+                00:00:00
+            </div>
+
+        </header>
+
+        <!-- Search -->
+
+        <section class="md-search-box">
+
+            <form method="GET" action="{{ url_for('doctor_md_records') }}" class="md-search-form">
+
+                <div class="md-search-field">
+                    <i class="fa-solid fa-id-card"></i>
+                    <input type="text" name="search_id" placeholder="Search by Patient ID"
+                           value="{{ search_id if search_id else '' }}">
+                </div>
+
+                <div class="md-search-field">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" name="search_name" placeholder="Search by Patient Name"
+                           value="{{ search_name if search_name else '' }}">
+                </div>
+
+                <button type="submit" class="md-search-btn">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    Search
+                </button>
+
+                <a href="{{ url_for('doctor_md_records') }}" class="md-clear-btn">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    Clear
+                </a>
+
+            </form>
+
+        </section>
+
+        <!-- Records Table -->
+
+        <section class="appointment-wrapper">
+
+            <section class="upcoming-section">
+
+                <h2>
+                    <i class="fa-solid fa-notes-medical"></i>
+                    Medical Records
+                </h2>
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Patient ID</th>
+                            <th>Patient Name</th>
+                            <th>Last Visit</th>
+                            <th>Status</th>
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                    {% if records %}
+
+                    {% for record in records %}
+
+                    <tr>
+
+                        <td>{{ record.patient_id }}</td>
+
+                        <td>{{ record.patient_name }}</td>
+
+                        <td>{{ record.appointment_date }}</td>
+
+                        <td>
+
+                            {% if record.status == "Approved" %}
+                                <span class="approved-badge">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    Approved
+                                </span>
+                            {% else %}
+                                <span class="pending">
+                                    <i class="fa-solid fa-clock"></i>
+                                    {{ record.status }}
+                                </span>
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            <a href="{{ url_for('add_medical_record', appointment_id=record.appointment_id) }}"
+                               class="approve-btn">
+
+                                <i class="fa-solid fa-file-medical"></i>
+                                Open Record
+
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                    {% else %}
+
+                    <tr>
+
+                        <td colspan="5">
+
+                            <div style="padding:40px;text-align:center;">
+
+                                <i class="fa-solid fa-folder-open"
+                                   style="font-size:55px;color:#8ecfff;"></i>
+
+                                <h3 style="margin-top:20px;">
+                                    No Records Found
+                                </h3>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% endif %}
+
+                    </tbody>
+
+                </table>
+
+            </section>
+
+        </section>
+
+        <footer class="footer">
+
+            <p>© 2026 EMRS - Electronic Medical Record System</p>
+
+        </footer>
+
+    </main>
+
+</div>
+
+<script>
+
+function updateClock(){
+
+    const now = new Date();
+
+    document.getElementById("clock").textContent =
+    now.toLocaleTimeString("en-IN",{
+
+        hour:"2-digit",
+        minute:"2-digit",
+        second:"2-digit",
+        hour12:true
+
+    });
+
+}
+
+updateClock();
+
+setInterval(updateClock,1000);
+
+</script>
+
+</body>
+</html>

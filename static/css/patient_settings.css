@@ -1,0 +1,238 @@
+/* ================= PATIENT SETTINGS PAGE (standalone, no sidebar) ================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+}
+
+body {
+    background: #f4f8fd;
+    color: #1a2b4a;
+}
+
+.settings-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 30px 24px 60px;
+}
+
+/* ---------------- Top bar ---------------- */
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.top-bar h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #0f2a5e;
+}
+
+.top-bar .sub-title {
+    color: #6b7a90;
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    color: #1a5fd0;
+    border: 1px solid #cfe2ff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+}
+
+.back-btn:hover {
+    background: #eaf3ff;
+}
+
+/* ---------------- Flash messages ---------------- */
+
+.flash-msg {
+    padding: 12px 18px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.flash-msg.success {
+    background: #d9f7e5;
+    color: #157347;
+}
+
+.flash-msg.danger {
+    background: #fde2e2;
+    color: #b02a2a;
+}
+
+/* ---------------- Form layout ---------------- */
+
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.settings-card {
+    background: #eaf3ff;
+    border-radius: 14px;
+    padding: 24px 28px;
+}
+
+.settings-card h3 {
+    font-size: 17px;
+    font-weight: 600;
+    color: #1a3a6b;
+    margin-bottom: 18px;
+}
+
+/* ---------------- Profile picture card ---------------- */
+
+.photo-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+/* Passport-photo size, same aspect ratio as before, just smaller */
+.photo-preview-box {
+    width: 140px;
+    max-width: 100%;
+    height: 180px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #ffffff;
+    border: 2px solid #cfe2ff;
+    margin-bottom: 18px;
+}
+
+.photo-preview-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #1a5fd0;
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.upload-btn:hover {
+    background: #144aa8;
+}
+
+.photo-card .hint {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #6b7a90;
+}
+
+/* ---------------- Form fields ---------------- */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px 24px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a3a6b;
+    margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group select {
+    padding: 10px 14px;
+    border: 1px solid #cfe2ff;
+    border-radius: 8px;
+    font-family: "Poppins", sans-serif;
+    font-size: 14px;
+    background: #ffffff;
+    outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #1a5fd0;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.save-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #1a5fd0;
+    color: #fff;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.save-btn:hover {
+    background: #144aa8;
+}
+
+/* ---------------- Footer ---------------- */
+
+.footer {
+    text-align: center;
+    padding: 18px;
+    color: #8494ab;
+    font-size: 13px;
+}
+
+/* ---------------- Responsive ---------------- */
+
+@media (max-width: 600px) {
+    .top-bar {
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .photo-preview-box {
+        width: 140px;
+        height: 180px;
+    }
+}

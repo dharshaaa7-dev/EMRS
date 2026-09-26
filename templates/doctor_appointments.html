@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Appointments | EMRS</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/doctor_appointments.css') }}">
+</head>
+
+<body>
+
+    <div class="appt-page">
+
+        <!-- ================= TOP BAR ================= -->
+
+        <div class="top-bar">
+
+            <div>
+                <h1>Appointments</h1>
+                <p class="sub-title">All appointments booked with you</p>
+            </div>
+
+            <a href="{{ url_for('doctor_dashboard') }}" class="back-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+                Back to Dashboard
+            </a>
+
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-msg {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- ================= STATS ================= -->
+
+        <div class="stats">
+
+            <div class="stat-card blue">
+                <i class="fa-solid fa-calendar-check"></i>
+                <h2>{{ total_appointments }}</h2>
+                <p>Total</p>
+            </div>
+
+            <div class="stat-card orange">
+                <i class="fa-solid fa-hourglass-half"></i>
+                <h2>{{ pending_count }}</h2>
+                <p>Pending</p>
+            </div>
+
+            <div class="stat-card green">
+                <i class="fa-solid fa-circle-check"></i>
+                <h2>{{ approved_count }}</h2>
+                <p>Approved</p>
+            </div>
+
+            <div class="stat-card red">
+                <i class="fa-solid fa-circle-xmark"></i>
+                <h2>{{ rejected_count }}</h2>
+                <p>Rejected</p>
+            </div>
+
+        </div>
+
+        <!-- ================= TABLE ================= -->
+
+        <div class="appt-card">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Appointment ID</th>
+                        <th>Patient</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                {% if appointments %}
+
+                    {% for appointment in appointments %}
+                    <tr>
+                        <td>{{ appointment.appointment_id }}</td>
+                        <td>{{ appointment.patient_name }}</td>
+                        <td>{{ appointment.appointment_date }}</td>
+                        <td>{{ appointment.appointment_time }}</td>
+                        <td>{{ appointment.reason }}</td>
+                        <td>
+                            {% if appointment.status == "Approved" %}
+                                <span class="badge approved">
+                                    <i class="fa-solid fa-circle-check"></i> Approved
+                                </span>
+                            {% elif appointment.status == "Rejected" %}
+                                <span class="badge rejected">
+                                    <i class="fa-solid fa-circle-xmark"></i> Rejected
+                                </span>
+                            {% else %}
+                                <span class="badge pending">
+                                    <i class="fa-solid fa-clock"></i> Pending
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if appointment.status == "Pending" %}
+                                <a href="{{ url_for('approve', id=appointment.appointment_id) }}"
+                                   class="approve-btn">
+                                    <i class="fa-solid fa-check"></i> Approve
+                                </a>
+                                <a href="{{ url_for('reject', id=appointment.appointment_id) }}"
+                                   class="reject-btn">
+                                    <i class="fa-solid fa-xmark"></i> Reject
+                                </a>
+                            {% else %}
+                                <span class="muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                {% else %}
+
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-calendar-xmark"></i>
+                                <h3>No Appointments Found</h3>
+                            </div>
+                        </td>
+                    </tr>
+
+                {% endif %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <footer class="footer">
+        © 2026 EMRS | Electronic Medical Record System
+    </footer>
+
+</body>
+
+</html>

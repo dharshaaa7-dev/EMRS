@@ -1,0 +1,247 @@
+/* ================= THEME VARIABLES ================= */
+:root {
+  --bg-main: #0b3550;
+  --bg-sidebar: #0a2d45;
+  --bg-card: #0f4364;
+  --bg-input: #0b3a58;
+  --accent: #3fbfd8;
+  --accent-dark: #2a9fb8;
+  --text-light: #ffffff;
+  --text-muted: #a9c4d4;
+  --border-color: #1c5678;
+  --danger: #e35d5d;
+  --success: #2fbf71;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: var(--bg-main);
+  color: var(--text-light);
+}
+
+.layout { display: flex; min-height: 100vh; }
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+  width: 240px;
+  background: var(--bg-sidebar);
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+.brand { text-align: center; }
+.brand-icon {
+  width: 70px; height: 70px; border-radius: 50%;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; margin: 0 auto 12px; color: var(--bg-sidebar);
+}
+.brand h1 { font-size: 22px; letter-spacing: 1px; }
+
+.nav-links { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.nav-links a {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-radius: 10px;
+  color: var(--text-light); text-decoration: none;
+  font-size: 15px; font-weight: 500;
+  transition: background 0.2s ease;
+}
+.nav-links a i { width: 18px; text-align: center; }
+.nav-links a:hover { background: rgba(255,255,255,0.06); }
+.nav-links a.active { background: var(--accent); color: var(--bg-sidebar); font-weight: 700; }
+
+.logout-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 12px; border-radius: 10px;
+  background: rgba(63, 191, 216, 0.15); color: var(--accent);
+  text-decoration: none; font-weight: 600;
+}
+.logout-btn:hover { background: rgba(63, 191, 216, 0.25); }
+
+/* ================= MAIN ================= */
+.main { flex: 1; padding: 34px 40px; }
+.page-header { margin-bottom: 26px; }
+.page-header h2 { font-size: 26px; display: flex; align-items: center; gap: 12px; }
+.page-header p { color: var(--text-muted); margin-top: 6px; font-size: 14px; }
+
+/* ================= FLASH ================= */
+.flash {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 18px; border-radius: 10px; margin-bottom: 20px;
+  font-size: 14px; font-weight: 500;
+  border-left: 4px solid var(--accent);
+  background: rgba(63, 191, 216, 0.12);
+}
+.flash.success { border-left-color: var(--success); background: rgba(47, 191, 113, 0.12); }
+.flash.danger { border-left-color: var(--danger); background: rgba(227, 93, 93, 0.12); }
+
+/* ================= CARD / FORM ================= */
+.report-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 30px;
+  margin-bottom: 28px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+}
+.section-title {
+  color: var(--accent);
+  font-size: 15px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin: 22px 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+.section-title:first-child { margin-top: 0; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 20px;
+}
+.field { display: flex; flex-direction: column; gap: 8px; }
+.field label { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.field input, .field select {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 8px; padding: 12px 14px;
+  color: var(--text-light); font-size: 14px; outline: none;
+  transition: border-color 0.2s ease;
+}
+.field input::placeholder { color: #6f93a8; }
+.field input:focus, .field select:focus { border-color: var(--accent); }
+
+.hint {
+  margin-top: 14px; font-size: 13px; color: var(--text-muted);
+  display: flex; align-items: center; gap: 8px;
+}
+.hint i { color: var(--accent); }
+
+/* ================= UPLOAD BOX ================= */
+.upload-box {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; border: 2px dashed var(--border-color); border-radius: 12px;
+  padding: 34px 20px; cursor: pointer; text-align: center; color: var(--text-muted);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.upload-box i { font-size: 30px; color: var(--accent); }
+.upload-box small { color: #6f93a8; }
+.upload-box:hover, .upload-box.dragging { border-color: var(--accent); background: rgba(63,191,216,0.06); }
+.upload-box.has-file { border-color: var(--accent); color: var(--text-light); }
+
+/* ================= BUTTONS ================= */
+.actions { display: flex; justify-content: flex-end; gap: 14px; margin-top: 26px; }
+.btn {
+  padding: 12px 24px; border-radius: 8px; border: none;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  transition: opacity 0.2s ease, transform 0.1s ease, background 0.2s ease;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: var(--bg-sidebar); }
+.btn-primary:hover { background: var(--accent-dark); }
+.btn-secondary { background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); }
+.btn-secondary:hover { color: var(--text-light); border-color: var(--text-light); }
+.btn-sm { padding: 7px 10px; font-size: 12px; }
+
+/* ================= TABLE ================= */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 780px; }
+thead th {
+  text-align: left; font-size: 13px; color: var(--accent);
+  text-transform: uppercase; padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+tbody td { padding: 8px 10px; font-size: 13.5px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+tbody td a { color: var(--accent); text-decoration: none; font-weight: 600; }
+tbody td a:hover { text-decoration: underline; }
+tbody td i.fa-file-pdf { color: var(--danger); margin-right: 6px; }
+.empty-row td { text-align: center; color: var(--text-muted); padding: 24px; }
+
+/* inline editable cells inside tables */
+tbody td input[type="text"] {
+  width: 100%;
+  min-width: 90px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 7px 9px;
+  color: var(--text-light);
+  font-size: 13px;
+  outline: none;
+}
+tbody td input[type="text"]:focus { border-color: var(--accent); }
+
+/* ================= FREQUENCY CHECKBOXES (Morning / Afternoon / Night) ================= */
+.freq-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 110px;
+}
+.freq-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-light);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.freq-group input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* inside the "Add New Prescription" grid field, lay checkboxes in a row */
+.field .freq-group {
+  flex-direction: row;
+  gap: 16px;
+  padding: 10px 0 2px;
+}
+
+/* ================= TAB BAR ================= */
+.tab-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0;
+}
+.tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 14.5px;
+  font-weight: 600;
+  padding: 12px 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 3px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.tab-btn:hover { color: var(--text-light); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 900px) {
+  .layout { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: relative; flex-direction: row; align-items: center; justify-content: space-between; }
+  .nav-links { flex-direction: row; }
+  .main { padding: 20px; }
+  .tab-bar { overflow-x: auto; }
+  .field .freq-group { flex-wrap: wrap; }
+}

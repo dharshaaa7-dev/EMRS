@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMRS - Settings</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_settings.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <header class="page-header">
+    <div>
+      <h2><i class="fa-solid fa-gear"></i> Settings</h2>
+      <p>View and update your admin profile</p>
+    </div>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+      <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+    </a>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="flash {{ category }}"><i class="fa-solid fa-circle-info"></i> {{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- ===================================================== -->
+  <!-- VIEW MODE -->
+  <!-- ===================================================== -->
+  <div class="settings-card" id="viewCard">
+
+    <div class="profile-head">
+      <div class="avatar">
+        {% if admin.profile_picture %}
+          <img src="{{ url_for('static', filename=admin.profile_picture) }}" alt="Profile picture">
+        {% else %}
+          <i class="fa-solid fa-user-shield"></i>
+        {% endif %}
+      </div>
+      <div class="profile-info">
+        <h3>{{ admin.full_name }}</h3>
+        <p>{{ admin.department }} &middot; {{ admin.hospital_name }}</p>
+      </div>
+      <button type="button" class="btn btn-primary" id="editBtn">
+        <i class="fa-solid fa-pen"></i> Edit Profile
+      </button>
+    </div>
+
+    <div class="grid view-grid">
+      <div class="field"><label>Username</label><p>{{ admin.username }}</p></div>
+      <div class="field"><label>Employee ID</label><p>{{ admin.employee_id }}</p></div>
+      <div class="field"><label>Email</label><p>{{ admin.email }}</p></div>
+      <div class="field"><label>Mobile</label><p>{{ admin.mobile }}</p></div>
+      <div class="field"><label>Gender</label><p>{{ admin.gender }}</p></div>
+      <div class="field"><label>Hospital</label><p>{{ admin.hospital_name }}</p></div>
+      <div class="field"><label>Department</label><p>{{ admin.department }}</p></div>
+      <div class="field"><label>Address</label><p>{{ admin.address }}</p></div>
+      <div class="field"><label>City</label><p>{{ admin.city }}</p></div>
+      <div class="field"><label>State</label><p>{{ admin.state }}</p></div>
+      <div class="field"><label>Pincode</label><p>{{ admin.pincode }}</p></div>
+    </div>
+  </div>
+
+  <!-- ===================================================== -->
+  <!-- EDIT MODE (hidden until "Edit Profile" is clicked) -->
+  <!-- ===================================================== -->
+  <form class="settings-card" id="editCard" method="POST" enctype="multipart/form-data" style="display:none;">
+
+    <div class="section-title">Edit Profile</div>
+
+    <!-- Profile picture upload — only shown here, in edit mode -->
+    <div class="pic-upload-row">
+      <div class="avatar avatar-lg" id="avatarPreviewWrap">
+        {% if admin.profile_picture %}
+          <img src="{{ url_for('static', filename=admin.profile_picture) }}" alt="Profile picture" id="avatarPreview">
+        {% else %}
+          <img src="" alt="Profile picture" id="avatarPreview" style="display:none;">
+          <i class="fa-solid fa-user-shield" id="avatarPlaceholderIcon"></i>
+        {% endif %}
+      </div>
+      <div class="pic-upload-actions">
+        <label for="profile_picture" class="btn btn-secondary btn-sm">
+          <i class="fa-solid fa-camera"></i> Change Profile Picture
+        </label>
+        <input type="file" id="profile_picture" name="profile_picture" accept="image/png, image/jpeg" hidden>
+        <small>PNG or JPG, square image recommended</small>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="field">
+        <label for="full_name">Full Name</label>
+        <input type="text" id="full_name" name="full_name" value="{{ admin.full_name }}" required>
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" value="{{ admin.email }}" required>
+      </div>
+      <div class="field">
+        <label for="mobile">Mobile</label>
+        <input type="text" id="mobile" name="mobile" value="{{ admin.mobile }}" required>
+      </div>
+      <div class="field">
+        <label for="gender">Gender</label>
+        <select id="gender" name="gender" required>
+          <option value="Male" {% if admin.gender == 'Male' %}selected{% endif %}>Male</option>
+          <option value="Female" {% if admin.gender == 'Female' %}selected{% endif %}>Female</option>
+          <option value="Other" {% if admin.gender == 'Other' %}selected{% endif %}>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="hospital_name">Hospital Name</label>
+        <input type="text" id="hospital_name" name="hospital_name" value="{{ admin.hospital_name }}" required>
+      </div>
+      <div class="field">
+        <label for="department">Department</label>
+        <input type="text" id="department" name="department" value="{{ admin.department }}" required>
+      </div>
+      <div class="field field-wide">
+        <label for="address">Address</label>
+        <input type="text" id="address" name="address" value="{{ admin.address }}" required>
+      </div>
+      <div class="field">
+        <label for="city">City</label>
+        <input type="text" id="city" name="city" value="{{ admin.city }}" required>
+      </div>
+      <div class="field">
+        <label for="state">State</label>
+        <input type="text" id="state" name="state" value="{{ admin.state }}" required>
+      </div>
+      <div class="field">
+        <label for="pincode">Pincode</label>
+        <input type="text" id="pincode" name="pincode" value="{{ admin.pincode }}" required>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+      <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Save Changes</button>
+    </div>
+  </form>
+
+</div>
+
+<script>
+  const viewCard = document.getElementById('viewCard');
+  const editCard = document.getElementById('editCard');
+  const editBtn = document.getElementById('editBtn');
+  const cancelBtn = document.getElementById('cancelBtn');
+
+  editBtn.addEventListener('click', () => {
+    viewCard.style.display = 'none';
+    editCard.style.display = 'block';
+  });
+
+  cancelBtn.addEventListener('click', () => {
+    editCard.style.display = 'none';
+    viewCard.style.display = 'block';
+  });
+
+  // live preview of newly chosen profile picture
+  const fileInput = document.getElementById('profile_picture');
+  const avatarPreview = document.getElementById('avatarPreview');
+  const avatarPlaceholderIcon = document.getElementById('avatarPlaceholderIcon');
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files && fileInput.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        avatarPreview.src = e.target.result;
+        avatarPreview.style.display = 'block';
+        if (avatarPlaceholderIcon) avatarPlaceholderIcon.style.display = 'none';
+      };
+      reader.readAsDataURL(fileInput.files[0]);
+    }
+  });
+</script>
+
+</body>
+</html>

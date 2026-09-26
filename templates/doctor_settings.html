@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Settings | EMRS</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/doctor_settings.css') }}">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <!-- Main -->
+
+    <main class="main-content">
+
+        <!-- Header -->
+
+        <header class="topbar">
+
+            <div class="header-left">
+                <span class="welcome">👋 Welcome</span>
+                <h1>Dr. {{ doctor.full_name }}</h1>
+                <p>Electronic Medical Record System</p>
+            </div>
+
+            <a href="{{ url_for('doctor_dashboard') }}" class="back-btn">
+                <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+            </a>
+
+        </header>
+
+        <!-- Flash Messages -->
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-wrap">
+                    {% for category, message in messages %}
+                        <div class="flash-msg {{ category }}">
+                            <i class="fa-solid fa-circle-info"></i> {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" enctype="multipart/form-data">
+
+            <!-- Profile Card -->
+
+            <section class="profile-card">
+
+                <div class="avatar-wrap">
+
+                    <div class="avatar" id="avatarPreview">
+
+                        {% if doctor.profile_picture %}
+                            <img src="{{ url_for('static', filename=doctor.profile_picture) }}" alt="Profile">
+                        {% else %}
+                            <i class="fa-solid fa-user-doctor"></i>
+                        {% endif %}
+
+                    </div>
+
+                    <label for="profile_picture" class="camera-btn">
+                        <i class="fa-solid fa-camera"></i>
+                    </label>
+
+                    <input type="file" name="profile_picture" id="profile_picture"
+                           accept=".png,.jpg,.jpeg" hidden onchange="previewAvatar(event)">
+
+                </div>
+
+                <div class="profile-meta">
+                    <h2>Dr. {{ doctor.full_name }}</h2>
+                    <p>{{ doctor.specialization }} &nbsp;|&nbsp; {{ doctor.qualification }}</p>
+                    <span>{{ doctor.hospital_name }}</span>
+                </div>
+
+            </section>
+
+            <!-- Edit Form -->
+
+            <section class="settings-box">
+
+                <h2><i class="fa-solid fa-user-pen"></i> Edit Profile Details</h2>
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" name="full_name" value="{{ doctor.full_name }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email" value="{{ doctor.email }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mobile</label>
+                        <input type="text" name="mobile" value="{{ doctor.mobile }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Specialization</label>
+                        <input type="text" name="specialization" value="{{ doctor.specialization }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Qualification</label>
+                        <input type="text" name="qualification" value="{{ doctor.qualification }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>License No.</label>
+                        <input type="text" name="license_no" value="{{ doctor.license_no }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Hospital Name</label>
+                        <input type="text" name="hospital_name" value="{{ doctor.hospital_name }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Hospital City</label>
+                        <input type="text" name="hospital_city" value="{{ doctor.hospital_city }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Hospital District</label>
+                        <input type="text" name="hospital_district" value="{{ doctor.hospital_district }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Hospital State</label>
+                        <input type="text" name="hospital_state" value="{{ doctor.hospital_state }}" required>
+                    </div>
+
+                </div>
+
+                <button type="submit" class="save-btn">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                </button>
+
+            </section>
+
+        </form>
+
+        <footer class="footer">
+            <p>© 2026 EMRS - Electronic Medical Record System</p>
+        </footer>
+
+    </main>
+
+</div>
+
+<script>
+
+function previewAvatar(event){
+    const file = event.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e){
+        document.getElementById("avatarPreview").innerHTML =
+            `<img src="${e.target.result}" alt="Profile">`;
+    };
+    reader.readAsDataURL(file);
+}
+
+</script>
+
+</body>
+</html>

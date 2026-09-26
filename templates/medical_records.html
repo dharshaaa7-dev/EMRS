@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Records | EMRS</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/medical_records.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ================= Page Header ================= -->
+
+    <div class="page-header">
+        <h1>
+            <i class="fa-solid fa-notes-medical"></i>
+            Medical Records
+        </h1>
+
+        <p>
+            View your complete treatment history.
+        </p>
+    </div>
+
+    <!-- ================= Statistics ================= -->
+
+    <div class="stats-container">
+
+        <!-- Total Records -->
+
+        <div class="stat-card">
+
+            <div class="icon-box">
+                <i class="fa-solid fa-file-medical"></i>
+            </div>
+
+            <div class="stat-content">
+                <h2>{{ total_records }}</h2>
+                <p>Total Records</p>
+            </div>
+
+        </div>
+
+        <!-- Last Visit -->
+
+        <div class="stat-card">
+
+            <div class="icon-box">
+                <i class="fa-solid fa-calendar-check"></i>
+            </div>
+
+            <div class="stat-content">
+
+                {% if last_visit %}
+                    <h2>{{ last_visit }}</h2>
+                {% else %}
+                    <h2>--</h2>
+                {% endif %}
+
+                <p>Last Visit</p>
+
+            </div>
+
+        </div>
+
+        <!-- Doctors Consulted -->
+
+        <div class="stat-card">
+
+            <div class="icon-box">
+                <i class="fa-solid fa-user-doctor"></i>
+            </div>
+
+            <div class="stat-content">
+                <h2>{{ doctors_consulted }}</h2>
+                <p>Doctors Consulted</p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ================= Medical Records ================= -->
+
+    {% if records %}
+
+        {% for record in records %}
+
+        <div class="record-card">
+
+            <div class="record-header">
+
+                <h2>
+                    <i class="fa-solid fa-file-waveform"></i>
+                    Record #{{ record.record_id }}
+                </h2>
+
+                <span class="date">
+                    {{ record.visit_date }}
+                </span>
+
+            </div>
+
+            <div class="details">
+                                <div class="detail-row">
+                    <span class="label">Doctor</span>
+                    <span class="value">{{ record.doctor_name }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="label">Specialization</span>
+                    <span class="value">{{ record.specialization }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="label">Diagnosis</span>
+                    <span class="value">{{ record.diagnosis }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="label">Symptoms</span>
+                    <span class="value">{{ record.symptoms }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="label">Treatment</span>
+                    <span class="value">{{ record.treatment }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="label">Doctor Notes</span>
+                    <span class="value">{{ record.doctor_notes }}</span>
+                </div>
+
+            </div> <!-- details -->
+
+        </div> <!-- record-card -->
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="empty">
+
+            <i class="fa-solid fa-file-circle-xmark"></i>
+
+            <h2>No Medical Records Found</h2>
+
+            <p>
+                Your doctor hasn't added any medical records yet.
+            </p>
+
+        </div>
+
+    {% endif %}
+
+    <!-- Back Button -->
+
+    <div class="back-btn-container">
+
+        <a href="{{ url_for('patient_dashboard') }}" class="back-btn">
+
+            <i class="fa-solid fa-arrow-left"></i>
+
+            Back to Dashboard
+
+        </a>
+
+    </div>
+
+</div> <!-- container -->
+
+</body>
+</html>

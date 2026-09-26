@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Add Medical Record | EMRS</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/add_medical_record.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="form-card">
+
+        <div class="title">
+
+            <i class="fa-solid fa-notes-medical"></i>
+
+            <h1>Add Medical Record</h1>
+
+            <p>Electronic Medical Record System</p>
+
+        </div>
+
+
+        <!-- Patient Details -->
+
+        <div class="patient-box">
+
+            <div class="info">
+
+                <label>
+                    <i class="fa-solid fa-user"></i>
+                    Patient Name
+                </label>
+
+                <input
+                    type="text"
+                    value="{{ appointment.patient_name }}"
+                    readonly>
+
+            </div>
+
+
+            <div class="info">
+
+                <label>
+                    <i class="fa-solid fa-calendar-check"></i>
+                    Appointment ID
+                </label>
+
+                <input
+                    type="text"
+                    value="{{ appointment.appointment_id }}"
+                    readonly>
+
+            </div>
+
+        </div>
+
+
+        <form method="POST">
+
+            <!-- Diagnosis -->
+
+            <div class="input-box">
+
+                <label>
+
+                    <i class="fa-solid fa-stethoscope"></i>
+
+                    Diagnosis
+
+                </label>
+
+                <input
+                    type="text"
+                    name="diagnosis"
+                    placeholder="Enter Diagnosis"
+                    required>
+
+            </div>
+
+
+            <!-- Symptoms -->
+
+            <div class="input-box">
+
+                <label>
+
+                    <i class="fa-solid fa-heart-pulse"></i>
+
+                    Symptoms
+
+                </label>
+
+                <textarea
+                    name="symptoms"
+                    rows="4"
+                    placeholder="Enter Symptoms"
+                    required></textarea>
+
+            </div>
+
+
+            <!-- Treatment -->
+
+            <div class="input-box">
+
+                <label>
+
+                    <i class="fa-solid fa-pills"></i>
+
+                    Treatment
+
+                </label>
+
+                <textarea
+                    name="treatment"
+                    rows="4"
+                    placeholder="Enter Treatment"
+                    required></textarea>
+
+            </div>
+
+
+            <!-- Doctor Notes -->
+
+            <div class="input-box">
+
+                <label>
+
+                    <i class="fa-solid fa-file-medical"></i>
+
+                    Doctor Notes
+
+                </label>
+
+                <textarea
+                    name="doctor_notes"
+                    rows="4"
+                    placeholder="Additional Notes"></textarea>
+
+            </div>
+
+
+            <div class="buttons">
+
+                <button type="submit" class="save-btn">
+
+                    <i class="fa-solid fa-floppy-disk"></i>
+
+                    Save Medical Record
+
+                </button>
+
+                <a href="{{ url_for('doctor_dashboard') }}" class="back-btn">
+
+                    <i class="fa-solid fa-arrow-left"></i>
+
+                    Back to Dashboard
+
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+</html>

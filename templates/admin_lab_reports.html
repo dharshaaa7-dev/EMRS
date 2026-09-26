@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMRS - Lab Reports</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_lab_reports.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+<div class="layout" style="display:block;">
+
+  <!-- ===== MAIN CONTENT (sidebar removed) ===== -->
+  <main class="main" style="width:100%; max-width:1100px; margin:0 auto; float:none;">
+
+    <header class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+      <div>
+        <h2><i class="fa-solid fa-flask-vial"></i> Lab Reports</h2>
+        <p>Search a patient, then upload reports, manage prescriptions or edit medical records</p>
+      </div>
+      <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary" style="white-space:nowrap;">
+        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+      </a>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="flash {{ category }}"><i class="fa-solid fa-circle-info"></i> {{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- ===== SHARED PATIENT SEARCH (used by all 3 tabs) ===== -->
+    <form class="report-card" method="POST" id="searchForm">
+      <input type="hidden" name="active_tab" id="searchActiveTab" value="{{ active_tab }}">
+      <div class="section-title">Search Patient</div>
+      <div class="grid">
+        <div class="field">
+          <label for="patient_id">Patient ID</label>
+          <input type="text" id="patient_id" name="patient_id" placeholder="e.g. 12" required
+                 value="{{ request.form.get('patient_id', '') }}">
+        </div>
+        <div class="field">
+          <label for="patient_name">Patient Name (exact full name)</label>
+          <input type="text" id="patient_name" name="patient_name" placeholder="Enter patient full name" required
+                 value="{{ request.form.get('patient_name', '') }}">
+        </div>
+      </div>
+      <div class="actions" style="justify-content:flex-start; margin-top:16px;">
+        <button type="submit" formnovalidate class="btn btn-secondary">
+          <i class="fa-solid fa-magnifying-glass"></i> Search Patient
+        </button>
+      </div>
+      {% if patient %}
+      <p class="hint" style="margin-top:16px;">
+        <i class="fa-solid fa-circle-check"></i>
+        Patient found: <strong>{{ patient.full_name }}</strong> (ID: {{ patient.patient_id }})
+      </p>
+      {% endif %}
+    </form>
+
+    {% if patient %}
+
+    <!-- ===== TAB BAR ===== -->
+    <div class="tab-bar">
+      <button type="button" class="tab-btn" data-tab="reports">
+        <i class="fa-solid fa-flask-vial"></i> Reports
+      </button>
+      <button type="button" class="tab-btn" data-tab="prescriptions">
+        <i class="fa-solid fa-pills"></i> Prescriptions
+      </button>
+      <button type="button" class="tab-btn" data-tab="records">
+        <i class="fa-solid fa-file-medical"></i> Medical Records
+      </button>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- TAB 1: REPORTS -->
+    <!-- ===================================================== -->
+    <div class="tab-panel" id="tab-reports">
+
+      <form class="report-card" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="active_tab" value="reports">
+        <input type="hidden" name="action" value="upload_report">
+        <input type="hidden" name="patient_id" value="{{ patient.patient_id }}">
+        <input type="hidden" name="patient_name" value="{{ patient.full_name }}">
+
+        <div class="section-title">Upload New Report</div>
+        <div class="grid">
+          <div class="field">
+            <label for="patient_number">Patient Number</label>
+            <input type="tel" id="patient_number" name="patient_number" placeholder="Contact number" required>
+          </div>
+          <div class="field">
+            <label for="visit_date">Visit Date</label>
+            <input type="date" id="visit_date" name="visit_date" required>
+          </div>
+          <div class="field">
+            <label for="test_name">Test Name</label>
+            <input type="text" id="test_name" name="test_name" placeholder="e.g. Complete Blood Count" required>
+          </div>
+          <div class="field">
+            <label for="test_code">Test Code</label>
+            <input type="text" id="test_code" name="test_code" placeholder="e.g. CBC-001" required>
+          </div>
+          <div class="field">
+            <label for="staff_name">Clinical Laboratory Staff Name</label>
+            <input type="text" id="staff_name" name="staff_name" placeholder="Enter staff name" required>
+          </div>
+          <div class="field">
+            <label for="clinic_name">Clinic Name</label>
+            <input type="text" id="clinic_name" name="clinic_name" placeholder="Enter clinic name" required>
+          </div>
+          <div class="field">
+            <label for="clinic_number">Clinic Number</label>
+            <input type="text" id="clinic_number" name="clinic_number" placeholder="Enter clinic contact number" required>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top:22px;">Upload PDF</div>
+        <label class="upload-box" for="report_pdf" id="uploadBox">
+          <i class="fa-solid fa-file-pdf"></i>
+          <span id="uploadText">Click to upload report PDF, or drag and drop</span>
+          <small>PDF files only, max 10MB</small>
+          <input type="file" id="report_pdf" name="report_pdf" accept="application/pdf" hidden required>
+        </label>
+
+        <div class="actions">
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-cloud-arrow-up"></i> Save &amp; Upload Report</button>
+        </div>
+      </form>
+
+      <div class="report-card">
+        <div class="section-title">Existing Reports</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Test</th><th>Code</th><th>Visit Date</th><th>Clinic</th><th>Report</th></tr></thead>
+            <tbody>
+              {% for r in reports %}
+              <tr>
+                <td>{{ r.test_name }}</td>
+                <td>{{ r.test_code }}</td>
+                <td>{{ r.visit_date }}</td>
+                <td>{{ r.clinic_name }}</td>
+                <td><a href="{{ url_for('static', filename=r.report_pdf) }}" target="_blank"><i class="fa-solid fa-file-pdf"></i> View PDF</a></td>
+              </tr>
+              {% else %}
+              <tr class="empty-row"><td colspan="5">No reports for this patient yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- TAB 2: PRESCRIPTIONS -->
+    <!-- ===================================================== -->
+    <div class="tab-panel" id="tab-prescriptions">
+
+      <div class="report-card">
+        <div class="section-title">Existing Prescriptions</div>
+
+        <!-- one hidden <form> per row (HTML doesn't allow <form> directly inside <tr>) -->
+        {% for p in prescriptions %}
+        <form id="presc-form-{{ p.prescription_id }}" method="POST"></form>
+        {% endfor %}
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Doctor</th><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Instructions</th><th>Update</th></tr></thead>
+            <tbody>
+              {% for p in prescriptions %}
+              {% set fid = 'presc-form-' ~ p.prescription_id %}
+              {% set freq_list = p.frequency.split(',') | map('trim') | list if p.frequency else [] %}
+              <tr>
+                <td>
+                  {{ p.prescribed_date }}
+                  <input type="hidden" form="{{ fid }}" name="active_tab" value="prescriptions">
+                  <input type="hidden" form="{{ fid }}" name="action" value="edit_prescription">
+                  <input type="hidden" form="{{ fid }}" name="patient_id" value="{{ patient.patient_id }}">
+                  <input type="hidden" form="{{ fid }}" name="patient_name" value="{{ patient.full_name }}">
+                  <input type="hidden" form="{{ fid }}" name="prescription_id" value="{{ p.prescription_id }}">
+                </td>
+                <td>Dr. {{ p.doctor_name }}</td>
+                <td><input form="{{ fid }}" type="text" name="medicine_name" value="{{ p.medicine_name }}" required></td>
+                <td><input form="{{ fid }}" type="text" name="dosage" value="{{ p.dosage }}" required></td>
+                <td>
+                  <div class="freq-group">
+                    <label>
+                      <input form="{{ fid }}" type="checkbox" name="frequency" value="Morning" {% if 'Morning' in freq_list %}checked{% endif %}>
+                      Morning
+                    </label>
+                    <label>
+                      <input form="{{ fid }}" type="checkbox" name="frequency" value="Afternoon" {% if 'Afternoon' in freq_list %}checked{% endif %}>
+                      Afternoon
+                    </label>
+                    <label>
+                      <input form="{{ fid }}" type="checkbox" name="frequency" value="Night" {% if 'Night' in freq_list %}checked{% endif %}>
+                      Night
+                    </label>
+                  </div>
+                </td>
+                <td><input form="{{ fid }}" type="text" name="duration" value="{{ p.duration }}" required></td>
+                <td><input form="{{ fid }}" type="text" name="instructions" value="{{ p.instructions }}"></td>
+                <td><button form="{{ fid }}" type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-pen"></i></button></td>
+              </tr>
+              {% else %}
+              <tr class="empty-row"><td colspan="8">No prescriptions for this patient yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <form class="report-card" method="POST">
+        <input type="hidden" name="active_tab" value="prescriptions">
+        <input type="hidden" name="action" value="add_prescription">
+        <input type="hidden" name="patient_id" value="{{ patient.patient_id }}">
+        <input type="hidden" name="patient_name" value="{{ patient.full_name }}">
+
+        <div class="section-title">Add New Prescription</div>
+        <div class="grid">
+          <div class="field">
+            <label for="medicine_name">Medicine Name</label>
+            <input type="text" id="medicine_name" name="medicine_name" required>
+          </div>
+          <div class="field">
+            <label for="dosage">Dosage</label>
+            <input type="text" id="dosage" name="dosage" placeholder="e.g. 500mg" required>
+          </div>
+          <div class="field">
+            <label>Frequency</label>
+            <div class="freq-group">
+              <label><input type="checkbox" name="frequency" value="Morning"> Morning</label>
+              <label><input type="checkbox" name="frequency" value="Afternoon"> Afternoon</label>
+              <label><input type="checkbox" name="frequency" value="Night"> Night</label>
+            </div>
+          </div>
+          <div class="field">
+            <label for="duration">Duration</label>
+            <input type="text" id="duration" name="duration" placeholder="e.g. 5 days" required>
+          </div>
+          <div class="field">
+            <label for="instructions">Instructions</label>
+            <input type="text" id="instructions" name="instructions" placeholder="e.g. After food">
+          </div>
+          <div class="field">
+            <label for="presc_doctor_id">Doctor</label>
+            <select id="presc_doctor_id" name="doctor_id" required>
+              <option value="" disabled selected>-- Select Doctor --</option>
+              {% for d in doctors %}
+                <option value="{{ d.doctor_id }}">{{ d.full_name }} (ID: {{ d.doctor_id }})</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Prescription</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- TAB 3: MEDICAL RECORDS -->
+    <!-- ===================================================== -->
+    <div class="tab-panel" id="tab-records">
+
+      <div class="report-card">
+        <div class="section-title">Medical Records (edit if something needs correcting)</div>
+
+        {% for r in medical_records %}
+        <form id="rec-form-{{ r.record_id }}" method="POST"></form>
+        {% endfor %}
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Visit Date</th><th>Doctor</th><th>Diagnosis</th><th>Symptoms</th><th>Treatment</th><th>Notes</th><th>Update</th></tr></thead>
+            <tbody>
+              {% for r in medical_records %}
+              {% set fid = 'rec-form-' ~ r.record_id %}
+              <tr>
+                <td>
+                  {{ r.visit_date }}
+                  <input type="hidden" form="{{ fid }}" name="active_tab" value="records">
+                  <input type="hidden" form="{{ fid }}" name="action" value="edit_medical_record">
+                  <input type="hidden" form="{{ fid }}" name="patient_id" value="{{ patient.patient_id }}">
+                  <input type="hidden" form="{{ fid }}" name="patient_name" value="{{ patient.full_name }}">
+                  <input type="hidden" form="{{ fid }}" name="record_id" value="{{ r.record_id }}">
+                </td>
+                <td>Dr. {{ r.doctor_name }}</td>
+                <td><input form="{{ fid }}" type="text" name="diagnosis" value="{{ r.diagnosis }}" required></td>
+                <td><input form="{{ fid }}" type="text" name="symptoms" value="{{ r.symptoms }}" required></td>
+                <td><input form="{{ fid }}" type="text" name="treatment" value="{{ r.treatment }}" required></td>
+                <td><input form="{{ fid }}" type="text" name="doctor_notes" value="{{ r.doctor_notes }}"></td>
+                <td><button form="{{ fid }}" type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-pen"></i></button></td>
+              </tr>
+              {% else %}
+              <tr class="empty-row"><td colspan="7">No medical records for this patient yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {% endif %}
+
+  </main>
+</div>
+
+<script>
+  // ---- upload box UX (reports tab) ----
+  const fileInput = document.getElementById('report_pdf');
+  const uploadBox = document.getElementById('uploadBox');
+  const uploadText = document.getElementById('uploadText');
+
+  if (fileInput) {
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) {
+        uploadText.textContent = fileInput.files[0].name;
+        uploadBox.classList.add('has-file');
+      }
+    });
+    ['dragover', 'dragleave', 'drop'].forEach(evt => uploadBox.addEventListener(evt, e => e.preventDefault()));
+    uploadBox.addEventListener('dragover', () => uploadBox.classList.add('dragging'));
+    uploadBox.addEventListener('dragleave', () => uploadBox.classList.remove('dragging'));
+    uploadBox.addEventListener('drop', e => {
+      uploadBox.classList.remove('dragging');
+      if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        uploadText.textContent = e.dataTransfer.files[0].name;
+        uploadBox.classList.add('has-file');
+      }
+    });
+  }
+
+  // ---- tab switching (client-side, no reload) ----
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabPanels = document.querySelectorAll('.tab-panel');
+  const searchActiveTab = document.getElementById('searchActiveTab');
+
+  function showTab(name) {
+    tabButtons.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    tabPanels.forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+    if (searchActiveTab) searchActiveTab.value = name;
+  }
+
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => showTab(btn.dataset.tab));
+  });
+
+  // open on whichever tab was active before the last form submit (default: reports)
+  const initialTab = "{{ active_tab or 'reports' }}";
+  showTab(initialTab);
+</script>
+
+</body>
+</html>

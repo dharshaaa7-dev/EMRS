@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Add Prescription | EMRS</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/add_prescription.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="form-card">
+
+        <div class="header">
+
+            <div class="icon">
+                <i class="fa-solid fa-prescription-bottle-medical"></i>
+            </div>
+
+            <h1>Add Prescription</h1>
+
+            <p>Electronic Medical Record System</p>
+
+        </div>
+
+        <form method="POST">
+
+            <div class="input-box">
+
+                <label>
+                    <i class="fa-solid fa-pills"></i>
+                    Medicine Name
+                </label>
+
+                <input
+                    type="text"
+                    name="medicine_name"
+                    placeholder="Enter medicine name"
+                    required>
+
+            </div>
+
+            <div class="row">
+
+                <div class="input-box">
+
+                    <label>
+                        <i class="fa-solid fa-capsules"></i>
+                        Dosage
+                    </label>
+
+                    <input
+                        type="text"
+                        name="dosage"
+                        placeholder="Example: 500mg"
+                        required>
+
+                </div>
+
+                <div class="input-box">
+
+                    <label>
+                        <i class="fa-solid fa-clock"></i>
+                        Frequency
+                    </label>
+
+                    <input
+                        type="text"
+                        name="frequency"
+                        placeholder="Example: 2 Times / Day"
+                        required>
+
+                </div>
+
+            </div>
+
+            <div class="input-box">
+
+                <label>
+                    <i class="fa-solid fa-calendar-days"></i>
+                    Duration
+                </label>
+
+                <input
+                    type="text"
+                    name="duration"
+                    placeholder="Example: 5 Days"
+                    required>
+
+            </div>
+
+            <div class="input-box">
+
+                <label>
+                    <i class="fa-solid fa-notes-medical"></i>
+                    Instructions
+                </label>
+
+                <textarea
+                    name="instructions"
+                    rows="5"
+                    placeholder="Medicine instructions..."
+                    required></textarea>
+
+            </div>
+
+            <div class="button-group">
+
+                <button type="submit" class="save-btn">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Save Prescription
+                </button>
+
+                <a href="{{ url_for('doctor_dashboard') }}" class="cancel-btn">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Back
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+</html>

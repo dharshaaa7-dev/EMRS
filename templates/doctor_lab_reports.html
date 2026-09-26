@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMRS - Doctor | Lab Reports</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='doctor_lab_reports.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon"><i class="fa-solid fa-user-doctor"></i></div>
+      <h1>EMRS</h1>
+      <span>Doctor Portal</span>
+    </div>
+    <nav class="nav-links">
+      <a href="{{ url_for('doctor.doctor_dashboard') }}"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+      <a href="{{ url_for('lab_reports.doctor_lab_reports_page') }}" class="active"><i class="fa-solid fa-flask-vial"></i> Lab Reports</a>
+      <a href="{{ url_for('doctor.appointments') }}"><i class="fa-solid fa-calendar-check"></i> Appointments</a>
+    </nav>
+    <a href="{{ url_for('auth.logout') }}" class="logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <main class="main">
+
+    <header class="page-header">
+      <h2><i class="fa-solid fa-magnifying-glass"></i> Check Lab Reports</h2>
+      <p>Enter the patient's ID and name to view their lab reports</p>
+    </header>
+
+    <!-- flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="flash {{ category }}">
+            <i class="fa-solid fa-circle-info"></i> {{ msg }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form class="report-card" method="GET" action="{{ url_for('lab_reports.doctor_lab_reports_search') }}">
+      <div class="section-title">Search Patient</div>
+      <div class="grid">
+        <div class="field">
+          <label for="patient_id">Patient ID</label>
+          <input type="text" id="patient_id" name="patient_id" placeholder="e.g. PAT0123"
+                 value="{{ searched_id or '' }}" required>
+        </div>
+        <div class="field">
+          <label for="patient_name">Patient Name</label>
+          <input type="text" id="patient_name" name="patient_name" placeholder="Enter patient name"
+                 value="{{ searched_name or '' }}" required>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Check Reports</button>
+      </div>
+    </form>
+
+    {% if reports is defined %}
+    <div class="report-card">
+      <div class="section-title">Results</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Test Name</th>
+              <th>Test Code</th>
+              <th>Visit Date</th>
+              <th>Clinic</th>
+              <th>Lab Staff</th>
+              <th>Report</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in reports %}
+            <tr>
+              <td>{{ r.test_name }}</td>
+              <td>{{ r.test_code }}</td>
+              <td>{{ r.visit_date }}</td>
+              <td>{{ r.clinic_name }}</td>
+              <td>{{ r.staff_name }}</td>
+              <td>
+                <a href="{{ url_for('lab_reports.get_lab_report_file', filename=r.report_pdf) }}"
+                   target="_blank">
+                  <i class="fa-solid fa-file-pdf"></i> View PDF
+                </a>
+              </td>
+            </tr>
+            {% else %}
+            <tr class="empty-row"><td colspan="6">No lab reports found for that patient.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EMRS - Appointments Overview</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_appointments.css') }}">
+</head>
+<body>
+
+  <div class="main-content">
+
+    <div class="top-bar">
+      <a href="{{ url_for('admin_dashboard') }}" class="btn-back">⬅ Back to Dashboard</a>
+    </div>
+
+    <h1 class="page-title">Appointments Overview</h1>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon">📋</div>
+        <div class="stat-number">{{ total_appointments }}</div>
+        <div class="stat-label">Total Appointments</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-number">{{ total_approved }}</div>
+        <div class="stat-label">Approved</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">❌</div>
+        <div class="stat-number">{{ total_rejected }}</div>
+        <div class="stat-label">Rejected</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-number">{{ total_pending }}</div>
+        <div class="stat-label">Pending</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Doctor-wise Breakdown</h2>
+
+      <table class="doctor-table">
+        <thead>
+          <tr>
+            <th>Doctor</th>
+            <th>Specialization</th>
+            <th>Total</th>
+            <th>Approved</th>
+            <th>Rejected</th>
+            <th>Pending</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in doctor_stats %}
+          <tr>
+            <td>{{ d.full_name }}</td>
+            <td>{{ d.specialization }}</td>
+            <td>{{ d.total }}</td>
+            <td class="text-approved">{{ d.approved }}</td>
+            <td class="text-rejected">{{ d.rejected }}</td>
+            <td class="text-pending">{{ d.pending }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="no-data">No doctors found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</body>
+</html>

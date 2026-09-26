@@ -165,59 +165,6 @@ body::after{
     margin-left:270px;
     width:calc(100% - 270px);
     padding:35px;
-}
-
-/* ================= Header ================= */
-
-.topbar{
-    background:#103B66;
-    border-radius:20px;
-    padding:30px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:30px;
-}
-
-.header-left{
-    display:flex;
-    flex-direction:column;
-}
-
-.welcome{
-    font-size:20px;
-    color:#7DEBFF;
-    margin-bottom:8px;
-}
-
-.header-left h1{
-    font-size:38px;
-    font-weight:700;
-}
-
-.header-left p{
-    font-size:15px;
-    color:#d5f5ff;
-    margin-top:6px;
-}
-
-.clock{
-    background:#0d4c7b;
-    width:180px;
-    height:55px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    border-radius:14px;
-    font-size:18px;
-    font-weight:600;
-}
-/* ================= Main Content ================= */
-
-.main-content{
-    margin-left:270px;
-    width:calc(100% - 270px);
-    padding:35px;
     animation:fadeIn .8s ease;
 }
 
@@ -232,22 +179,48 @@ body::after{
     }
 }
 
-/* ================= Header ================= */
+/* ================= Header (merged: profile pic + welcome + clock) ================= */
 
 .topbar{
     background:#103B66;
     border-radius:20px;
-    padding:30px;
+    padding:25px 30px;
     display:flex;
-    justify-content:space-between;
     align-items:center;
+    gap:25px;
     margin-bottom:30px;
     box-shadow:0 8px 20px rgba(0,0,0,.25);
+}
+
+.topbar .profile-image{
+    width:170px;
+    height:200px;
+    min-width:78px;
+    border-radius:10px;
+    background:#0EBEFF;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    overflow:hidden;
+    border:2px solid rgba(255,255,255,.4);
+}
+
+.topbar .profile-image i{
+    font-size:34px;
+    color:#fff;
+}
+
+.topbar .profile-image img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
 }
 
 .header-left{
     display:flex;
     flex-direction:column;
+    flex:1;
 }
 
 .welcome{
@@ -258,7 +231,7 @@ body::after{
 }
 
 .header-left h1{
-    font-size:34px;
+    font-size:32px;
     font-weight:700;
     margin-bottom:5px;
 }
@@ -276,52 +249,6 @@ body::after{
     font-size:18px;
     font-weight:600;
     color:#fff;
-}
-
-/* ================= Doctor Profile ================= */
-
-.doctor-info{
-    margin-bottom:30px;
-}
-
-.profile-card{
-    display:flex;
-    align-items:center;
-    gap:20px;
-    background:#103B66;
-    border-radius:20px;
-    padding:25px;
-    box-shadow:0 8px 20px rgba(0,0,0,.25);
-}
-
-.profile-image{
-    width:90px;
-    height:90px;
-    border-radius:50%;
-    background:#0EBEFF;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-}
-
-.profile-image i{
-    font-size:40px;
-    color:#fff;
-}
-
-.profile-info h2{
-    font-size:28px;
-    margin-bottom:6px;
-}
-
-.profile-info p{
-    color:#bdefff;
-    margin-bottom:5px;
-}
-
-.profile-info span{
-    color:#dff8ff;
-    font-size:14px;
 }
 
 /* ================= Dashboard Stats ================= */
@@ -478,12 +405,12 @@ body::after{
 }
 
 .approved-badge{
-    background:#16a34a;
+    background:hsl(142, 84%, 29%);
     color:#fff;
 }
 
 .rejected-badge{
-    background:#dc2626;
+    background:hsl(0, 90%, 31%);
     color:#fff;
 }
 
@@ -554,11 +481,6 @@ body::after{
         gap:20px;
     }
 
-    .profile-card{
-        flex-direction:column;
-        text-align:center;
-    }
-
     .stats{
         grid-template-columns:1fr;
     }
@@ -592,13 +514,14 @@ body::after{
         font-size:26px;
     }
 
-    .profile-image{
-        width:75px;
-        height:75px;
+    .topbar .profile-image{
+        width:60px;
+        height:74px;
+        min-width:60px;
     }
 
-    .profile-image i{
-        font-size:32px;
+    .topbar .profile-image i{
+        font-size:28px;
     }
 
 }

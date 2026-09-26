@@ -1,0 +1,142 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+body {
+  background: #10222c;
+  min-height: 100vh;
+}
+
+/* ---------- Main content ---------- */
+.main-content {
+  padding: 40px 60px;
+  width: 100%;
+}
+
+/* ---------- Top bar / back button ---------- */
+.top-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.btn-back {
+  background: #2f8fc4;
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.btn-back:hover {
+  background: #257aa8;
+}
+
+.page-title {
+  color: #ffffff;
+  font-size: 28px;
+  margin-bottom: 25px;
+}
+
+/* ---------- Stats ---------- */
+.stats-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background: #16303e;
+  border-radius: 14px;
+  padding: 25px;
+  flex: 1;
+  min-width: 180px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.stat-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.stat-number {
+  font-size: 30px;
+  font-weight: 800;
+  color: #3fb6e8;
+}
+
+.stat-label {
+  color: #cfe8f5;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+/* ---------- Card ---------- */
+.card {
+  background: #16303e;
+  border-radius: 14px;
+  padding: 30px 35px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.card h2 {
+  color: #ffffff;
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+
+/* ---------- Doctor-wise table ---------- */
+.doctor-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.doctor-table th {
+  text-align: left;
+  color: #3fb6e8;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 10px;
+  border-bottom: 2px solid #1f3f4f;
+}
+
+.doctor-table td {
+  color: #ffffff;
+  padding: 14px 10px;
+  border-bottom: 1px solid #1f3f4f;
+  font-size: 14px;
+}
+
+.doctor-table tbody tr:hover {
+  background: #1b3a4b;
+}
+
+.text-approved {
+  color: #5fd68a;
+  font-weight: 700;
+}
+
+.text-rejected {
+  color: #f06868;
+  font-weight: 700;
+}
+
+.text-pending {
+  color: #f0c060;
+  font-weight: 700;
+}
+
+.no-data {
+  text-align: center;
+  color: #7fa8bb;
+  padding: 20px;
+}

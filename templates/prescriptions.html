@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Prescriptions | EMRS</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/prescriptions.css') }}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- Header -->
+
+    <div class="page-header">
+
+        <h1>
+            <i class="fa-solid fa-prescription-bottle-medical"></i>
+            Prescriptions
+        </h1>
+
+        <p>
+            View all medicines prescribed by your doctors.
+        </p>
+
+    </div>
+
+    <!-- Prescription List -->
+
+    {% if prescriptions %}
+
+        {% for p in prescriptions %}
+
+        <div class="prescription-card">
+
+            <div class="card-header">
+
+                <div>
+
+                    <h2>
+                        <i class="fa-solid fa-file-prescription"></i>
+                        Prescription #{{ p.prescription_id }}
+                    </h2>
+
+                    <span class="date">
+                        {{ p.prescribed_date }}
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="details">
+
+                <div class="detail-row">
+                    <span class="label">Doctor</span>
+                    <span class="value">{{ p.doctor_name }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="label">Medicine</span>
+                    <span class="value">{{ p.medicine_name }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="label">Dosage</span>
+                    <span class="value">{{ p.dosage }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="label">Frequency</span>
+                    <span class="value">{{ p.frequency }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="label">Duration</span>
+                    <span class="value">{{ p.duration }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <span class="label">Instructions</span>
+                    <span class="value">
+                        {{ p.instructions }}
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <div class="empty-box">
+
+            <i class="fa-solid fa-prescription-bottle-medical"></i>
+
+            <h2>No Prescriptions Available</h2>
+
+            <p>
+                Your doctor has not prescribed any medicines yet.
+            </p>
+
+        </div>
+
+    {% endif %}
+
+    <!-- Back Button -->
+
+    <div class="back-btn-container">
+
+        <a href="{{ url_for('patient_dashboard') }}" class="back-btn">
+
+            <i class="fa-solid fa-arrow-left"></i>
+
+            Back to Dashboard
+
+        </a>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

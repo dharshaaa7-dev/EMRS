@@ -1,0 +1,114 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+body {
+  background: #10222c;
+  min-height: 100vh;
+}
+
+/* ---------- Main content ---------- */
+.main-content {
+  padding: 40px 60px;
+  width: 100%;
+}
+
+/* ---------- Top bar / back button ---------- */
+.top-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.btn-back {
+  background: #2f8fc4;
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.btn-back:hover {
+  background: #257aa8;
+}
+
+/* ---------- Card ---------- */
+.card {
+  background: #16303e;
+  border-radius: 14px;
+  padding: 30px 35px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.card h1 {
+  color: #ffffff;
+  font-size: 26px;
+  margin-bottom: 20px;
+}
+
+/* ---------- Edit form (vertical layout) ---------- */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 500px;
+  margin-top: 15px;
+}
+
+.edit-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edit-form .form-group label {
+  color: #7fc4e8;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.edit-form .form-group input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #274a5c;
+  background: #0e222c;
+  color: #fff;
+  font-size: 14px;
+}
+
+.edit-form .form-group input:focus {
+  outline: none;
+  border-color: #3fb6e8;
+}
+
+.btn-primary {
+  background: #2f8fc4;
+  color: #fff;
+  border: none;
+  padding: 11px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
+  align-self: flex-start;
+  margin-top: 10px;
+}
+
+.btn-primary:hover {
+  background: #257aa8;
+}
+
+.not-found {
+  color: #f0a860;
+  font-weight: 600;
+  margin-bottom: 15px;
+}

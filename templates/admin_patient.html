@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMRS - Patient Profile</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_patient.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="main main-full">
+
+    <header class="page-header">
+      <a href="{{ url_for('admin_dashboard') }}" class="back-btn">
+        <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+      </a>
+      <h2><i class="fa-solid fa-user-injured"></i> Patient Profile</h2>
+      <p>Search a patient to view their full details, medical records, prescriptions and lab reports</p>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="flash {{ category }}"><i class="fa-solid fa-circle-info"></i> {{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- ===== SEARCH ===== -->
+    <form class="report-card" method="POST">
+      <div class="section-title">Search Patient</div>
+      <div class="grid">
+        <div class="field">
+          <label for="patient_id">Patient ID</label>
+          <input type="text" id="patient_id" name="patient_id" placeholder="e.g. 12" required
+                 value="{{ request.form.get('patient_id', '') }}">
+        </div>
+        <div class="field">
+          <label for="patient_name">Patient Name (exact full name)</label>
+          <input type="text" id="patient_name" name="patient_name" placeholder="Enter patient full name" required
+                 value="{{ request.form.get('patient_name', '') }}">
+        </div>
+      </div>
+      <div class="actions" style="justify-content:flex-start; margin-top:16px;">
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+      </div>
+    </form>
+
+    {% if patient %}
+
+    <!-- ===== PATIENT DETAILS ===== -->
+    <div class="report-card">
+      <div class="section-title">Patient Details</div>
+      <div class="details-grid">
+        <div class="detail"><span>Full Name</span><strong>{{ patient.full_name }}</strong></div>
+        <div class="detail"><span>Patient ID</span><strong>{{ patient.patient_id }}</strong></div>
+        <div class="detail"><span>Email</span><strong>{{ patient.email }}</strong></div>
+        <div class="detail"><span>Mobile</span><strong>{{ patient.mobile }}</strong></div>
+        <div class="detail"><span>DOB</span><strong>{{ patient.dob }}</strong></div>
+        <div class="detail"><span>Gender</span><strong>{{ patient.gender }}</strong></div>
+        <div class="detail"><span>Blood Group</span><strong>{{ patient.blood_group }}</strong></div>
+        <div class="detail"><span>Hospital</span><strong>{{ patient.hospital_name }}</strong></div>
+        <div class="detail"><span>Address</span>
+          <strong>{{ patient.house_no }}, {{ patient.street }}, {{ patient.city }}, {{ patient.district }}, {{ patient.state }} - {{ patient.pincode }}</strong>
+        </div>
+        <div class="detail"><span>Emergency Contact</span><strong>{{ patient.emergency_name }} ({{ patient.emergency_phone }})</strong></div>
+      </div>
+    </div>
+
+    <!-- ===== MEDICAL RECORDS ===== -->
+    <div class="report-card">
+      <div class="section-title"><i class="fa-solid fa-file-medical"></i> Medical Records</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Visit Date</th><th>Doctor</th><th>Diagnosis</th><th>Symptoms</th><th>Treatment</th><th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in medical_records %}
+            <tr>
+              <td>{{ r.visit_date }}</td>
+              <td>Dr. {{ r.doctor_name }} <br><small>{{ r.specialization }}</small></td>
+              <td>{{ r.diagnosis }}</td>
+              <td>{{ r.symptoms }}</td>
+              <td>{{ r.treatment }}</td>
+              <td>{{ r.doctor_notes }}</td>
+            </tr>
+            {% else %}
+            <tr class="empty-row"><td colspan="6">No medical records found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== PRESCRIPTIONS ===== -->
+    <div class="report-card">
+      <div class="section-title"><i class="fa-solid fa-pills"></i> Prescriptions</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Prescribed Date</th><th>Doctor</th><th>Medicine</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Instructions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in prescriptions %}
+            <tr>
+              <td>{{ p.prescribed_date }}</td>
+              <td>Dr. {{ p.doctor_name }}</td>
+              <td>{{ p.medicine_name }}</td>
+              <td>{{ p.dosage }}</td>
+              <td>{{ p.frequency }}</td>
+              <td>{{ p.duration }}</td>
+              <td>{{ p.instructions }}</td>
+            </tr>
+            {% else %}
+            <tr class="empty-row"><td colspan="7">No prescriptions found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== LAB REPORTS ===== -->
+    <div class="report-card">
+      <div class="section-title"><i class="fa-solid fa-flask-vial"></i> Lab Reports</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Test</th><th>Test Code</th><th>Visit Date</th><th>Clinic</th><th>Report</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for lr in lab_reports %}
+            <tr>
+              <td>{{ lr.test_name }}</td>
+              <td>{{ lr.test_code }}</td>
+              <td>{{ lr.visit_date }}</td>
+              <td>{{ lr.clinic_name }}</td>
+              <td>
+                <a href="{{ url_for('static', filename=lr.report_pdf) }}" target="_blank">
+                  <i class="fa-solid fa-file-pdf"></i> View PDF
+                </a>
+              </td>
+            </tr>
+            {% else %}
+            <tr class="empty-row"><td colspan="5">No lab reports found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% endif %}
+
+  </main>
+</div>
+</body>
+</html>
