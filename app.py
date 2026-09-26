@@ -18,15 +18,12 @@ print("Flask STATIC folder (put css/js/images here) :", app.static_folder)
 print("CSS should be at :", os.path.join(app.static_folder, "css", "admin_dashboard.css"))
 print("That file exists? :", os.path.isfile(os.path.join(app.static_folder, "css", "admin_dashboard.css")))
 print("=" * 60)
-
 # ================= MAIL CONFIGURATION ================= #
 app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 587
 app.config["MAIL_USE_TLS"] = True
-app.config["MAIL_USERNAME"] = "dharshaaa7@gmail.com"
-
-# 16-character Google App Password (NO SPACES)
-app.config["MAIL_PASSWORD"] = "auroxawuhozzqsnm"
+app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
+app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
 
 print("MAIL_USERNAME =", app.config["MAIL_USERNAME"])
 
@@ -36,14 +33,14 @@ else:
     print("MAIL_PASSWORD Not Found")
 
 mail = Mail(app)
-
 # ================= DATABASE CONNECTION ================= #
+
 db = mysql.connector.connect(
-    host="emrs-project-emrs-project.j.aivencloud.com",
-    port=19848,
-    user="avnadmin",
-    password="AVNS__VIr2odYDjuaKrICSSh",
-    database="defaultdb",
+    host=os.getenv("DB_HOST"),
+    port=int(os.getenv("DB_PORT")),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASSWORD"),
+    database=os.getenv("DB_NAME"),
     ssl_ca="ca.pem",
     connection_timeout=30,
     autocommit=True
@@ -59,29 +56,29 @@ cursor = db.cursor(dictionary=True)
 
 @app.before_request
 def ensure_db_connection():
-    # Static files (css, js, images, fonts) don't need the database at
-    # all — running the DB ping/reconnect check for them just adds
-    # delay and can even make them fail if the DB ping is slow.
     if request.endpoint == "static":
         return
 
     global db, cursor
+
     try:
         db.ping(reconnect=True, attempts=3, delay=2)
+
     except mysql.connector.Error as e:
         print("DB Reconnect Failed, creating new connection :", e)
+
         db = mysql.connector.connect(
-            host="emrs-project-emrs-project.j.aivencloud.com",
-            port=19848,
-            user="avnadmin",
-            password="AVNS__VIr2odYDjuaKrICSSh",
-            database="defaultdb",
+            host=os.getenv("DB_HOST"),
+            port=int(os.getenv("DB_PORT")),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            database=os.getenv("DB_NAME"),
             ssl_ca="ca.pem",
             connection_timeout=30,
             autocommit=True
         )
-    cursor = db.cursor(dictionary=True)
 
+    cursor = db.cursor(dictionary=True)
 # ================= LAB REPORT PDF UPLOAD CONFIG ================= #
 UPLOAD_FOLDER = os.path.join("static", "uploads", "lab_reports")
 ALLOWED_EXTENSIONS = {"pdf"}
