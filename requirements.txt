@@ -13,3 +13,4 @@ mysql-connector-python==26.7.0
 pillow==12.3.0
 reportlab==5.0.1
 Werkzeug==3.1.8
+deep-translator==1.11.4
