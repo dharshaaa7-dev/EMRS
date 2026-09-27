@@ -3,6 +3,10 @@ import mysql.connector
 import random
 import re
 import os
+
+from dotenv import load_dotenv
+load_dotenv(r"D:\EMRS\.env")   # <-- loads DB_HOST, DB_PORT, MAIL_USERNAME etc. from the .env file
+
 from reportlab.pdfgen import canvas
 import io
 from flask_mail import Mail, Message
@@ -205,7 +209,7 @@ def doctor_register():
         confirm_password = request.form["confirm_password"]
 
         if password != confirm_password:
-            return "❌ Passwords do not match"
+            return "\u274c Passwords do not match"
 
         cursor.execute(
             "SELECT * FROM doctor WHERE email=%s",
@@ -213,7 +217,7 @@ def doctor_register():
         )
 
         if cursor.fetchone():
-            return "❌ Email already registered"
+            return "\u274c Email already registered"
 
         cursor.execute(
             "SELECT * FROM doctor WHERE username=%s",
@@ -221,7 +225,7 @@ def doctor_register():
         )
 
         if cursor.fetchone():
-            return "❌ Username already exists"
+            return "\u274c Username already exists"
 
         sql = """
         INSERT INTO doctor
@@ -338,10 +342,6 @@ def doctor_dashboard():
     )
 
 # ================= DOCTOR: MEDICAL RECORDS SEARCH (LIST) ================= #
-# Sidebar "Medical Records" button -> search this doctor's own
-# appointments by Patient ID / Name, then click "Open Record" to go to
-# add_medical_record for that appointment (existing route further down).
-
 @app.route('/doctor/medical-records', methods=['GET'])
 def doctor_md_records():
 
@@ -388,14 +388,6 @@ def doctor_md_records():
     )
 
 # ================= DOCTOR: PRESCRIPTIONS (SEARCH / ADD / EDIT) ================= #
-# Sidebar "Prescriptions" button -> search patient by ID + Name (same
-# pattern as doctor_patient) -> show that patient's prescription history
-# written by this doctor, add a new prescription, or edit an existing one.
-#
-# NOTE: run this once if the column doesn't exist yet (stores checked
-# timing options like "Morning, Night" as a comma-separated string):
-#   ALTER TABLE prescriptions ADD COLUMN timing VARCHAR(50) NULL;
-
 @app.route("/doctor_prescription", methods=["GET", "POST"])
 def doctor_prescription():
 
@@ -497,14 +489,6 @@ def doctor_prescription():
 
 
 # ================= DOCTOR SETTINGS (VIEW / EDIT PROFILE + PICTURE) ================= #
-# Sidebar "Settings" button -> edit the doctor's own profile fields and
-# upload/replace a profile picture (same pattern as admin_settings /
-# patient_settings). Uses the shared PROFILE_UPLOAD_FOLDER +
-# allowed_image() already defined near the top of app.py.
-#
-# NOTE: run this once if the column doesn't exist yet:
-#   ALTER TABLE doctor ADD COLUMN profile_picture VARCHAR(255) NULL;
-
 @app.route("/doctor_settings", methods=["GET", "POST"])
 def doctor_settings():
 
@@ -640,10 +624,6 @@ def doctor_logout():
     return redirect(url_for("doctor_login"))
 
 # ================= DOCTOR: ALL APPOINTMENTS ================= #
-# Sidebar "Appointments" button -> a dedicated page listing every
-# appointment for this doctor with Approve / Reject actions
-# (same actions as the dashboard table, just on their own page).
-
 @app.route("/doctor_appointments")
 def doctor_appointments():
 
@@ -688,10 +668,6 @@ def doctor_appointments():
     )
 
 # ================= DOCTOR: PATIENT LOOKUP (VIEW ONLY) ================= #
-# Sidebar "Patients" button -> search by Patient ID + Name (same pattern
-# as admin_patient) -> show patient details + their Medical Records +
-# Prescriptions + Lab Reports. View only, no editing.
-
 @app.route("/doctor_patient", methods=["GET", "POST"])
 def doctor_patient():
 
@@ -839,8 +815,6 @@ def add_medical_record(appointment_id):
     )
 
 # ================= DOCTOR: ADD LAB REPORT ================= #
-# Linked from doctor_dashboard.html "Add Report" button (Lab Report column,
-# shown only once an appointment is Approved).
 
 @app.route("/add_lab_report/<int:appointment_id>", methods=["GET", "POST"])
 def add_lab_report(appointment_id):
@@ -1030,7 +1004,7 @@ def admin_register():
     confirm_password = request.form["confirm_password"]
 
     if password != confirm_password:
-        return "❌ Passwords do not match"
+        return "\u274c Passwords do not match"
 
     cursor.execute(
         "SELECT * FROM admin WHERE email=%s",
@@ -1038,7 +1012,7 @@ def admin_register():
     )
 
     if cursor.fetchone():
-        return "❌ Email already exists"
+        return "\u274c Email already exists"
 
     cursor.execute(
         "SELECT * FROM admin WHERE username=%s",
@@ -1046,7 +1020,7 @@ def admin_register():
     )
 
     if cursor.fetchone():
-        return "❌ Username already exists"
+        return "\u274c Username already exists"
 
     cursor.execute(
         "SELECT * FROM admin WHERE employee_id=%s",
@@ -1054,7 +1028,7 @@ def admin_register():
     )
 
     if cursor.fetchone():
-        return "❌ Employee ID already exists"
+        return "\u274c Employee ID already exists"
 
     sql = """
     INSERT INTO admin
@@ -1149,9 +1123,6 @@ def admin_dashboard():
     )
 
 # ================= ADMIN PATIENT PROFILE (VIEW ONLY) ================= #
-# Sidebar "Patient" button -> search by Patient ID + Name -> show full
-# patient details + their Medical Records + Prescriptions + Lab Reports.
-
 @app.route("/admin_patient", methods=["GET", "POST"])
 def admin_patient():
 
@@ -1216,9 +1187,6 @@ def admin_patient():
         lab_reports=lab_reports_list
     )
 # ================= ADMIN DOCTOR PROFILE (VIEW ONLY) ================= #
-# Sidebar/back-button "Doctor" page -> search by Doctor ID + Full Name ->
-# show full doctor details + patient count + appointment stats.
-
 @app.route("/admin_doctor", methods=["GET", "POST"])
 def admin_doctor():
 
@@ -1284,9 +1252,6 @@ def admin_doctor():
         pending_count=pending_count
     )
 # ================= ADMIN APPOINTMENTS OVERVIEW ================= #
-# Sidebar "Appointments" button -> overall totals (Total / Approved /
-# Rejected / Pending) + a per-doctor breakdown table.
-
 @app.route("/admin_appointments")
 def admin_appointments():
 
@@ -1331,10 +1296,7 @@ def admin_appointments():
         doctor_stats=doctor_stats
     )
 # ================= ADMIN EDIT DOCTOR ================= #
-# Linked from admin_doctor.html "Edit" button.
 print(os.listdir('templates'))
-# NOTE: lab_reports table has no doctor_id column, so the reports-upload
-# form no longer sends/expects a doctor selection.
 @app.route("/admin_doctor_edit/<int:doctor_id>", methods=["GET", "POST"])
 def admin_doctor_edit(doctor_id):
 
@@ -1402,18 +1364,6 @@ def admin_doctor_edit(doctor_id):
         doctor=doctor
     )
 # ================= ADMIN LAB REPORTS HUB ================= #
-# One page, three tabs (client-side switch, no reload needed to look
-# between them once a patient is searched):
-#   Reports        -> upload a new lab report PDF
-#   Prescriptions  -> add a new prescription / edit an existing one
-#   Medical Records-> edit an existing record (added by a doctor)
-# All three tabs share ONE "Search Patient" box at the top.
-#
-# NOTE: the Frequency field on this page is 3 checkboxes
-# (Morning / Afternoon / Night). The checked values are joined into one
-# comma-separated string ("Morning, Night") before being saved, same as
-# the "frequency" column in the prescriptions table already expects.
-
 @app.route("/admin_lab_reports", methods=["GET", "POST"])
 def admin_lab_reports():
 
@@ -1688,13 +1638,11 @@ def patient_register():
     gender = request.form["gender"]
     blood_group = request.form["blood_group"]
 
-    house_no = request.form["house_no"]
-    street = request.form["street"]
+    address = request.form["address"]
     city = request.form["city"]
     district = request.form["district"]
     state = request.form["state"]
     pincode = request.form["pincode"]
-    hospital_name = request.form["hospital_name"]
     emergency_name = request.form["emergency_name"]
     emergency_phone = request.form["emergency_phone"]
 
@@ -1706,7 +1654,7 @@ def patient_register():
     )
 
     if cursor.fetchone():
-        return "❌ Email already registered."
+        return "\u274c Email already registered."
 
     cursor.execute(
         "SELECT * FROM patient WHERE username=%s",
@@ -1714,11 +1662,17 @@ def patient_register():
     )
 
     if cursor.fetchone():
-        return "❌ Username already exists."
+        return "\u274c Username already exists."
+
+    # NEW: generate the custom patient_id (e.g. "RAAP01") from the
+    # patient's name + city, instead of relying on auto-increment
+    # (hospital is no longer collected at registration time).
+    new_patient_id = generate_patient_id(full_name, city)
 
     sql = """
     INSERT INTO patient
 (
+    patient_id,
     full_name,
     username,
     email,
@@ -1726,24 +1680,23 @@ def patient_register():
     dob,
     gender,
     blood_group,
-    house_no,
-    street,
+    address,
     city,
     district,
     state,
     pincode,
-    hospital_name,
     emergency_name,
     emergency_phone,
     password
 )
 VALUES
 (
-    %s,%s,%s,%s,%s,%s,%s,
-    %s,%s,%s,%s,%s,%s,
-    %s,%s,%s,%s
+    %s,%s,%s,%s,%s,%s,%s,%s,
+    %s,%s,%s,%s,%s,
+    %s,%s,%s
 )"""
     values = (
+        new_patient_id,
         full_name,
         username,
         email,
@@ -1751,13 +1704,11 @@ VALUES
         dob,
         gender,
         blood_group,
-        house_no,
-        street,
+        address,
         city,
         district,
         state,
         pincode,
-        hospital_name,
         emergency_name,
         emergency_phone,
         password
@@ -1765,8 +1716,6 @@ VALUES
 
     cursor.execute(sql, values)
     db.commit()
-
-    new_patient_id = cursor.lastrowid
 
     session["patient_id"] = new_patient_id
     session["username"] = username
@@ -1779,9 +1728,6 @@ def search_hospitals():
 
     keyword = request.args.get("q", "")
 
-    # Using the doctor table's hospital_name column (already filled in
-    # whenever a doctor registers) instead of a separate hospital table
-    # that needs manual data entry.
     cursor.execute("""
         SELECT DISTINCT hospital_name
         FROM doctor
@@ -1797,12 +1743,7 @@ def search_hospitals():
 # ============================================================
 # AI FEATURE 1: District -> City -> Hospital cascading search
 # ============================================================
-# Uses the EXISTING `doctor` table's hospital_district / hospital_city /
-# hospital_name columns (already filled in when a doctor registers) --
-# no separate hospital table or manual data entry needed.
 
-# Full Tamil Nadu district list so the dropdown always shows every
-# district, even before any doctor has registered a hospital there yet.
 TAMIL_NADU_DISTRICTS = [
     "Ariyalur", "Chengalpattu", "Chennai", "Coimbatore", "Cuddalore",
     "Dharmapuri", "Dindigul", "Erode", "Kallakurichi", "Kancheepuram",
@@ -1818,9 +1759,6 @@ TAMIL_NADU_DISTRICTS = [
 @app.route("/api/get_districts")
 def get_districts():
 
-    # Any district that already has a hospital registered by a doctor,
-    # PLUS the full static Tamil Nadu list, merged so every district
-    # shows up regardless of whether a doctor has registered there yet.
     cursor.execute("""
         SELECT DISTINCT hospital_district
         FROM doctor
@@ -1865,7 +1803,7 @@ def get_hospitals_by_location():
         ORDER BY hospital_name
     """, (district, city))
 
-    hospitals = cursor.fetchall()   # list of {"hospital_name": "..."}
+    hospitals = cursor.fetchall()
 
     return jsonify(hospitals)
 
@@ -1890,9 +1828,6 @@ def get_doctors_by_hospital():
 # ============================================================
 # AI FEATURE 2: Voice/Text symptom -> Tamil to English -> Department
 # ============================================================
-# Frontend sends whatever the patient spoke (Tamil, via browser voice
-# recognition with lang='ta-IN') or typed. This translates it to English
-# and reuses suggest_department() below to detect the right department.
 
 @app.route("/api/analyze_symptom", methods=["POST"])
 def analyze_symptom():
@@ -1909,7 +1844,7 @@ def analyze_symptom():
             translated_text = original_text
     except Exception as e:
         print("Translation Error :", e)
-        translated_text = original_text   # fall back to original if translation service fails
+        translated_text = original_text
 
     department = suggest_department(translated_text)
 
@@ -2042,7 +1977,7 @@ def book_appointment():
     patient_id = session["patient_id"]
 
     cursor.execute("""
-        SELECT full_name, email, hospital_name
+        SELECT full_name, email
         FROM patient
         WHERE patient_id=%s
     """, (patient_id,))
@@ -2053,7 +1988,9 @@ def book_appointment():
     if patient is None:
         return "Patient not found"
 
-    hospital_name = patient["hospital_name"]
+    # Patients no longer register with a fixed hospital, so the hospital
+    # is chosen at booking time (via the hospital_name field in the form).
+    hospital_name = ""
     suggested_department = ""
 
     cursor.execute("""
@@ -2084,9 +2021,6 @@ def book_appointment():
 
         reason = request.form["reason"]
 
-        # AI FEATURE: if the patient picked a hospital via the
-        # District -> City -> Hospital search (or the autocomplete box),
-        # use that instead of their default on-file hospital.
         selected_hospital = request.form.get("hospital_name", "").strip()
         if selected_hospital:
             hospital_name = selected_hospital
@@ -2223,11 +2157,6 @@ def book_appointment():
     )
 
 # ================= AI Department Suggestion ================= #
-# Returns lowercase department names so they match `doctor.specialization
-# |lower` exactly as used by filterDoctors() in book_appointment.html.
-# Same category list as the client-side keyword logic, kept in sync so a
-# Tamil voice input (translated here) and an English typed input (checked
-# client-side) always land on the same department.
 
 def suggest_department(reason):
 
@@ -2277,6 +2206,45 @@ def suggest_department(reason):
 
     else:
         return "general physician"
+
+
+# ============================================================
+# CUSTOM PATIENT ID GENERATOR
+# ============================================================
+# Builds an ID like "RAAP01" -> first 2 letters of the patient's name
+# + first 2 letters of the city + a running 2-digit number
+# for that exact prefix (so different name/city combos each start
+# their own count from 01).
+
+def generate_patient_id(full_name, city):
+
+    name_letters = re.sub(r'[^A-Za-z]', '', full_name or "")
+    name_part = (name_letters[:2] or "XX").upper()
+
+    city_letters = re.sub(r'[^A-Za-z]', '', city or "")
+    city_part = (city_letters[:2] or "XX").upper()
+
+    prefix = name_part + city_part
+
+    cursor.execute("""
+        SELECT COUNT(*) AS total
+        FROM patient
+        WHERE patient_id LIKE %s
+    """, (prefix + "%",))
+
+    count = cursor.fetchone()["total"]
+    next_number = count + 1
+
+    new_id = f"{prefix}{next_number:02d}"
+
+    while True:
+        cursor.execute("SELECT patient_id FROM patient WHERE patient_id=%s", (new_id,))
+        if not cursor.fetchone():
+            break
+        next_number += 1
+        new_id = f"{prefix}{next_number:02d}"
+
+    return new_id
 
 
 # ================= Appointment Success ================= #
@@ -2545,8 +2513,7 @@ def edit_patient_profile():
         gender = request.form["gender"]
         blood_group = request.form["blood_group"]
 
-        house_no = request.form["house_no"]
-        street = request.form["street"]
+        address = request.form["address"]
         city = request.form["city"]
         district = request.form["district"]
         state = request.form["state"]
@@ -2564,8 +2531,7 @@ def edit_patient_profile():
             dob=%s,
             gender=%s,
             blood_group=%s,
-            house_no=%s,
-            street=%s,
+            address=%s,
             city=%s,
             district=%s,
             state=%s,
@@ -2582,8 +2548,7 @@ def edit_patient_profile():
             dob,
             gender,
             blood_group,
-            house_no,
-            street,
+            address,
             city,
             district,
             state,
@@ -2612,14 +2577,6 @@ def edit_patient_profile():
 
 
 # ================= PATIENT SETTINGS (VIEW / EDIT PROFILE + PROFILE PICTURE) ================= #
-# Sidebar "Settings" button -> edit the patient's own profile fields and
-# upload/replace a profile picture. The picture is stored under
-# static/uploads/profile_pictures/ (same folder admin profile pictures use)
-# and the saved path is written into patient.profile_image, which is the
-# column patient_dashboard.html already reads to show the photo.
-#
-# NOTE: run this once if the column doesn't exist yet:
-#   ALTER TABLE patient ADD COLUMN profile_image VARCHAR(255) NULL;
 
 @app.route("/patient_settings", methods=["GET", "POST"])
 def patient_settings():
@@ -2638,8 +2595,7 @@ def patient_settings():
         gender = request.form["gender"]
         blood_group = request.form["blood_group"]
 
-        house_no = request.form["house_no"]
-        street = request.form["street"]
+        address = request.form["address"]
         city = request.form["city"]
         district = request.form["district"]
         state = request.form["state"]
@@ -2678,8 +2634,7 @@ def patient_settings():
                 dob=%s,
                 gender=%s,
                 blood_group=%s,
-                house_no=%s,
-                street=%s,
+                address=%s,
                 city=%s,
                 district=%s,
                 state=%s,
@@ -2695,8 +2650,7 @@ def patient_settings():
             dob,
             gender,
             blood_group,
-            house_no,
-            street,
+            address,
             city,
             district,
             state,
@@ -2770,7 +2724,7 @@ def forgot_password(role):
             return f"Database Query Error: {e}"
 
         if not user:
-            return "❌ Email or Mobile not found."
+            return "\u274c Email or Mobile not found."
 
         otp = str(random.randint(100000, 999999))
 
@@ -2845,7 +2799,7 @@ def reset_password():
         if password != confirm_password:
             return render_template(
                 "reset_password.html",
-                error="❌ Passwords do not match."
+                error="\u274c Passwords do not match."
             )
 
         login_id = session["login_id"]
@@ -2862,7 +2816,7 @@ def reset_password():
         if user and password == user["password"]:
             return render_template(
                 "reset_password.html",
-                error="❌ You cannot reuse your old password."
+                error="\u274c You cannot reuse your old password."
             )
 
         pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$'
@@ -2870,7 +2824,7 @@ def reset_password():
         if not re.match(pattern, password):
             return render_template(
                 "reset_password.html",
-                error="❌ Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number and one special character."
+                error="\u274c Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number and one special character."
             )
 
         if table == "patient":

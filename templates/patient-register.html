@@ -127,20 +127,13 @@
                 Address Details
             </h3>
 
+            <!-- Combined Address (House No / Street / Area) -->
             <div class="input-box">
-                <label>House No / Door No</label>
-                <input type="text"
-                       name="house_no"
-                       placeholder="House No / Door No"
-                       required>
-            </div>
-
-            <div class="input-box">
-                <label>Street / Area</label>
-                <input type="text"
-                       name="street"
-                       placeholder="Street / Area"
-                       required>
+                <label>Address</label>
+                <textarea name="address"
+                          placeholder="House No, Street, Area"
+                          rows="3"
+                          required></textarea>
             </div>
 
             <div class="input-box">
@@ -151,20 +144,60 @@
                        required>
             </div>
 
-            <div class="input-box">
-                <label>District</label>
-                <input type="text"
-                       name="district"
-                       placeholder="Enter District"
-                       required>
-            </div>
-
+            <!-- State: locked to Tamil Nadu -->
             <div class="input-box">
                 <label>State</label>
-                <input type="text"
-                       name="state"
-                       placeholder="Enter State"
-                       required>
+
+                <select name="state" id="state" required>
+                    <option value="Tamil Nadu" selected>Tamil Nadu</option>
+                </select>
+            </div>
+
+            <!-- District: all Tamil Nadu districts -->
+            <div class="input-box">
+                <label>District</label>
+
+                <select name="district" id="district" required>
+                    <option value="">Select District</option>
+                    <option>Ariyalur</option>
+                    <option>Chengalpattu</option>
+                    <option>Chennai</option>
+                    <option>Coimbatore</option>
+                    <option>Cuddalore</option>
+                    <option>Dharmapuri</option>
+                    <option>Dindigul</option>
+                    <option>Erode</option>
+                    <option>Kallakurichi</option>
+                    <option>Kanchipuram</option>
+                    <option>Kanyakumari</option>
+                    <option>Karur</option>
+                    <option>Krishnagiri</option>
+                    <option>Madurai</option>
+                    <option>Mayiladuthurai</option>
+                    <option>Nagapattinam</option>
+                    <option>Namakkal</option>
+                    <option>Nilgiris</option>
+                    <option>Perambalur</option>
+                    <option>Pudukkottai</option>
+                    <option>Ramanathapuram</option>
+                    <option>Ranipet</option>
+                    <option>Salem</option>
+                    <option>Sivaganga</option>
+                    <option>Tenkasi</option>
+                    <option>Thanjavur</option>
+                    <option>Theni</option>
+                    <option>Thoothukudi</option>
+                    <option>Tiruchirappalli</option>
+                    <option>Tirunelveli</option>
+                    <option>Tirupathur</option>
+                    <option>Tiruppur</option>
+                    <option>Tiruvallur</option>
+                    <option>Tiruvannamalai</option>
+                    <option>Tiruvarur</option>
+                    <option>Vellore</option>
+                    <option>Viluppuram</option>
+                    <option>Virudhunagar</option>
+                </select>
             </div>
 
             <div class="input-box">
@@ -175,21 +208,6 @@
                        maxlength="6"
                        required>
             </div>
-            <div class="input-box">
-    <label>Hospital</label>
-
-    <input
-        type="text"
-        name="hospital_name"
-        id="hospital_name"
-        list="hospitalList"
-        placeholder="Search Hospital (e.g. Government Hospital Sivakasi)"
-        autocomplete="off"
-        required>
-
-    <datalist id="hospitalList">
-    </datalist>
-</div>
 
             <!-- Emergency Contact Name -->
             <div class="input-box">
@@ -386,37 +404,6 @@ registerForm.addEventListener("submit", function(e){
     }
 
 });
-
-const hospitalInput = document.getElementById("hospital_name");
-const hospitalList = document.getElementById("hospitalList");
-
-hospitalInput.addEventListener("input", function(){
-
-    let keyword = this.value;
-
-    if(keyword.length < 2){
-        hospitalList.innerHTML = "";
-        return;
-    }
-
-    fetch("/search_hospitals?q=" + keyword)
-    .then(res => res.json())
-    .then(data => {
-
-        hospitalList.innerHTML = "";
-
-        data.forEach(function(hospital){
-
-            let option = document.createElement("option");
-            option.value = hospital;
-            hospitalList.appendChild(option);
-
-        });
-
-    });
-
-});
-
 
 </script>
 
