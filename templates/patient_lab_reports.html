@@ -13,9 +13,6 @@ from flask_mail import Mail, Message
 from werkzeug.utils import secure_filename
 from deep_translator import GoogleTranslator   # <-- AI FEATURE: Tamil -> English translation
 
-import cloudinary
-import cloudinary.uploader
-
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 app.secret_key = "emrs_secret_key_2026"
 
@@ -25,18 +22,6 @@ print("Flask STATIC folder (put css/js/images here) :", app.static_folder)
 print("CSS should be at :", os.path.join(app.static_folder, "css", "admin_dashboard.css"))
 print("That file exists? :", os.path.isfile(os.path.join(app.static_folder, "css", "admin_dashboard.css")))
 print("=" * 60)
-
-# ================= CLOUDINARY CONFIGURATION ================= #
-# Lab report PDFs are stored on Cloudinary instead of local disk because
-# Render's free-tier filesystem is ephemeral - files saved to disk
-# disappear on every restart/redeploy, which is why "View PDF" was
-# throwing 404 after a while even though the DB row still existed.
-cloudinary.config(
-    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
-    api_key=os.getenv("CLOUDINARY_API_KEY"),
-    api_secret=os.getenv("CLOUDINARY_API_SECRET")
-)
-
 # ================= MAIL CONFIGURATION ================= #
 app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 587
@@ -872,17 +857,12 @@ def add_lab_report(appointment_id):
         elif not allowed_file(file.filename):
             flash("Only PDF files are allowed.", "danger")
         else:
-            # Uploaded to Cloudinary instead of local disk so the file
-            # survives Render restarts/redeploys (local disk is ephemeral).
-            public_id = secure_filename(f"{appointment['patient_id']}_{test_code}")
-            upload_result = cloudinary.uploader.upload(
-                file,
-                resource_type="raw",
-                folder="lab_reports",
-                public_id=public_id,
-                overwrite=True
+            filename = secure_filename(
+                f"{appointment['patient_id']}_{test_code}_{file.filename}"
             )
-            report_pdf = upload_result["secure_url"]
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
+            file.save(file_path)
+            report_pdf = f"uploads/lab_reports/{filename}"
 
             cursor.execute("""
                 INSERT INTO lab_reports
@@ -1436,18 +1416,10 @@ def admin_lab_reports():
                 elif not allowed_file(file.filename):
                     flash("Only PDF files are allowed.", "danger")
                 else:
-                    # Uploaded to Cloudinary instead of local disk so the
-                    # file survives Render restarts/redeploys (local disk
-                    # on Render's free tier is ephemeral and gets wiped).
-                    public_id = secure_filename(f"{patient_id}_{test_code}")
-                    upload_result = cloudinary.uploader.upload(
-                        file,
-                        resource_type="raw",
-                        folder="lab_reports",
-                        public_id=public_id,
-                        overwrite=True
-                    )
-                    report_pdf = upload_result["secure_url"]
+                    filename = secure_filename(f"{patient_id}_{test_code}_{file.filename}")
+                    file_path = os.path.join(UPLOAD_FOLDER, filename)
+                    file.save(file_path)
+                    report_pdf = f"uploads/lab_reports/{filename}"
 
                     cursor.execute("""
                         INSERT INTO lab_reports
@@ -1924,7 +1896,7 @@ def lab_reports():
     reports = cursor.fetchall()
 
     return render_template(
-        "lab_reports.html",
+        "patient_lab_reports.html",
         reports=reports
     )
 
