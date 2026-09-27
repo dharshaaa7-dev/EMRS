@@ -15,6 +15,7 @@ from deep_translator import GoogleTranslator   # <-- AI FEATURE: Tamil -> Englis
 
 import cloudinary
 import cloudinary.uploader
+import cloudinary.api
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 app.secret_key = "emrs_secret_key_2026"
