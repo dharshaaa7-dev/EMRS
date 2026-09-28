@@ -6,131 +6,586 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Prescriptions | EMRS</title>
 
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/prescriptions.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap"
+          rel="stylesheet">
 
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-          rel="stylesheet">
+    <style>
+
+        :root{
+            --blue:#005eb8;
+            --blue-dark:#003f7d;
+            --blue-deep:#00294f;
+            --blue-tint:#e8f1fa;
+            --green:#00703c;
+            --ink:#1b2733;
+            --muted:#586674;
+            --line:#d5dde5;
+            --page:#f3f6f9;
+            --white:#ffffff;
+            --radius:6px;
+        }
+
+        *{ margin:0; padding:0; box-sizing:border-box; }
+
+        body{
+            font-family:"Public Sans","Segoe UI",Arial,sans-serif;
+            color:var(--ink);
+            background:var(--page);
+            min-height:100vh;
+            display:flex;
+            flex-direction:column;
+            line-height:1.5;
+        }
+
+        a:focus-visible,
+        button:focus-visible{
+            outline:3px solid #ffb81c;
+            outline-offset:2px;
+        }
+
+        /* HEADER */
+
+        .topbar{
+            background:var(--blue);
+            color:var(--white);
+            padding:14px 28px;
+            display:flex;
+            align-items:center;
+            gap:14px;
+            border-bottom:4px solid var(--blue-dark);
+        }
+
+        .logo{
+            width:40px;
+            height:40px;
+            background:var(--white);
+            color:var(--blue);
+            border-radius:var(--radius);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:22px;
+            flex-shrink:0;
+        }
+
+        .brand{
+            font-size:21px;
+            font-weight:700;
+            line-height:1.1;
+        }
+
+        .brand small{
+            display:block;
+            font-size:12.5px;
+            font-weight:400;
+            color:#d3e5f6;
+            margin-top:2px;
+        }
+
+        .topbar .portal{
+            margin-left:auto;
+            font-size:13.5px;
+            font-weight:500;
+            display:flex;
+            align-items:center;
+            gap:8px;
+        }
+
+        .crumbs{
+            background:var(--white);
+            border-bottom:1px solid var(--line);
+            padding:11px 28px;
+            font-size:13.5px;
+            color:var(--muted);
+        }
+
+        .crumbs a{ color:var(--blue); text-decoration:none; }
+        .crumbs a:hover{ text-decoration:underline; }
+        .crumbs i{ font-size:10px; margin:0 8px; }
+
+        /* LAYOUT */
+
+        .container{
+            flex:1;
+            width:100%;
+            max-width:1140px;
+            margin:0 auto;
+            padding:30px 20px 48px;
+        }
+
+        .page-header h1{
+            font-size:28px;
+            font-weight:700;
+            color:var(--blue-deep);
+        }
+
+        .page-header p{
+            margin-top:4px;
+            color:var(--muted);
+            font-size:15px;
+        }
+
+        /* ===== MEDICAL SLIP (screen + PDF) ===== */
+
+        .slip{
+            background:var(--white);
+            border:2px solid var(--blue-deep);
+            margin-top:24px;
+            color:var(--ink);
+        }
+
+        .slip-head{
+            display:flex;
+            align-items:center;
+            gap:16px;
+            padding:18px 24px;
+            border-bottom:3px double var(--blue-deep);
+        }
+
+        .slip-head .logo{
+            width:52px;
+            height:52px;
+            font-size:28px;
+            background:var(--blue);
+            color:var(--white);
+        }
+
+        .slip-head h2{
+            font-size:22px;
+            color:var(--blue-deep);
+            line-height:1.2;
+        }
+
+        .slip-head p{
+            font-size:13px;
+            color:var(--muted);
+        }
+
+        .slip-meta{
+            margin-left:auto;
+            text-align:right;
+            font-size:13px;
+            color:var(--muted);
+        }
+
+        .slip-meta strong{
+            display:block;
+            font-size:15px;
+            color:var(--ink);
+        }
+
+        .slip-title{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding:10px 24px;
+            background:var(--blue-tint);
+            border-bottom:1px solid var(--blue-deep);
+            font-weight:700;
+            color:var(--blue-deep);
+            font-size:15px;
+        }
+
+        .slip-title .rx-mark{
+            font-size:28px;
+            font-family:Georgia,"Times New Roman",serif;
+            font-style:italic;
+            line-height:1;
+        }
+
+        .slip-patient{
+            padding:10px 24px;
+            border-bottom:1px solid var(--blue-deep);
+            font-size:14px;
+        }
+
+        .table-box{
+            padding:16px 24px 8px;
+            overflow-x:auto;
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+            min-width:820px;
+            border:1.5px solid var(--blue-deep);
+        }
+
+        thead{
+            background:var(--blue-tint);
+        }
+
+        th{
+            padding:10px 10px;
+            font-size:13.5px;
+            font-weight:700;
+            color:var(--blue-deep);
+            text-align:left;
+            border:1px solid var(--blue-deep);
+        }
+
+        td{
+            padding:10px 10px;
+            font-size:13.5px;
+            text-align:left;
+            vertical-align:top;
+            border:1px solid #9fb2c4;
+        }
+
+        tr{ page-break-inside:avoid; }
+
+        .rx-no{
+            font-weight:700;
+            color:var(--blue-dark);
+            white-space:nowrap;
+        }
+
+        .medicine{
+            font-weight:600;
+            color:var(--blue-deep);
+        }
+
+        .slip-sign{
+            display:flex;
+            justify-content:space-between;
+            align-items:flex-end;
+            padding:36px 24px 14px;
+            font-size:13px;
+            color:var(--muted);
+        }
+
+        .sign-line{
+            width:220px;
+            border-top:1px solid var(--ink);
+            padding-top:4px;
+            text-align:center;
+        }
+
+        .slip-foot{
+            padding:12px 24px;
+            border-top:1px solid var(--blue-deep);
+            font-size:12px;
+            color:var(--muted);
+            text-align:center;
+        }
+
+        /* ACTIONS */
+
+        .actions{
+            display:flex;
+            flex-wrap:wrap;
+            gap:12px;
+            margin-top:22px;
+        }
+
+        .pdf-btn{
+            display:inline-flex;
+            align-items:center;
+            gap:9px;
+            background:var(--green);
+            color:var(--white);
+            border:none;
+            padding:12px 22px;
+            border-radius:var(--radius);
+            font-family:inherit;
+            font-size:15px;
+            font-weight:600;
+            box-shadow:0 2px 0 #004d2a;
+            cursor:pointer;
+            transition:background .15s;
+        }
+
+        .pdf-btn:hover{ background:#005c32; }
+        .pdf-btn:disabled{ opacity:.7; cursor:wait; }
+
+        .back-btn{
+            display:inline-flex;
+            align-items:center;
+            gap:9px;
+            background:var(--white);
+            color:var(--blue-dark);
+            border:1.5px solid var(--blue);
+            padding:11px 20px;
+            border-radius:var(--radius);
+            font-family:inherit;
+            font-size:15px;
+            font-weight:600;
+            text-decoration:none;
+            cursor:pointer;
+            transition:background .15s;
+        }
+
+        .back-btn:hover{ background:var(--blue-tint); }
+
+        .back-btn-container{
+            margin-top:12px;
+        }
+
+        /* EMPTY */
+
+        .empty-box{
+            margin-top:24px;
+            background:var(--white);
+            border:1px solid var(--line);
+            border-radius:var(--radius);
+            text-align:center;
+            padding:48px 16px;
+            color:var(--muted);
+        }
+
+        .empty-box i{
+            font-size:40px;
+            color:#9bb8d3;
+            margin-bottom:12px;
+            display:block;
+        }
+
+        .empty-box h2{
+            font-size:20px;
+            color:var(--ink);
+            margin-bottom:4px;
+        }
+
+        footer{
+            background:var(--blue-deep);
+            color:#b8cde2;
+            text-align:center;
+            font-size:13px;
+            padding:18px 16px;
+        }
+
+        /* PDF CAPTURE MODE (applied to a detached clone) */
+
+        .slip.pdf-mode{
+            width:100%;
+            margin:0;
+        }
+
+        .slip.pdf-mode .slip-head{ padding:14px 16px; }
+        .slip.pdf-mode .slip-head h2{ font-size:19px; }
+        .slip.pdf-mode .slip-title,
+        .slip.pdf-mode .slip-patient,
+        .slip.pdf-mode .slip-foot{ padding-left:16px; padding-right:16px; }
+        .slip.pdf-mode .table-box{ overflow:visible; padding:14px 16px 6px; }
+        .slip.pdf-mode table{ min-width:0; table-layout:fixed; }
+        .slip.pdf-mode th,
+        .slip.pdf-mode td{
+            font-size:10.5px;
+            padding:7px 5px;
+            word-wrap:break-word;
+            overflow-wrap:anywhere;
+        }
+        .slip.pdf-mode .slip-sign{ padding:40px 16px 14px; }
+        .slip.pdf-mode .sign-line{ width:170px; }
+
+        @media(max-width:560px){
+            .topbar{ padding:12px 16px; }
+            .topbar .portal{ display:none; }
+            .crumbs{ padding:10px 16px; }
+            .page-header h1{ font-size:23px; }
+            .slip-head{ flex-wrap:wrap; }
+            .slip-meta{ margin-left:0; text-align:left; width:100%; }
+            .pdf-btn{ width:100%; justify-content:center; }
+        }
+
+    </style>
 </head>
 
 <body>
 
+<header class="topbar">
+    <div class="logo"><i class="fa-solid fa-hospital"></i></div>
+    <div class="brand">
+        EMRS
+        <small>Electronic Medical Record System</small>
+    </div>
+    <div class="portal"><i class="fa-solid fa-user-injured"></i>Patient Portal</div>
+</header>
+
+<nav class="crumbs" aria-label="Breadcrumb">
+    <a href="{{ url_for('patient_dashboard') }}">Dashboard</a>
+    <i class="fa-solid fa-chevron-right"></i>
+    <span>Prescriptions</span>
+</nav>
+
 <div class="container">
 
-    <!-- Header -->
-
     <div class="page-header">
-
-        <h1>
-            <i class="fa-solid fa-prescription-bottle-medical"></i>
-            Prescriptions
-        </h1>
-
-        <p>
-            View all medicines prescribed by your doctors.
-        </p>
-
+        <h1>Prescriptions</h1>
+        <p>View all medicines prescribed by your doctors and save them as a PDF slip.</p>
     </div>
-
-    <!-- Prescription List -->
 
     {% if prescriptions %}
 
-        {% for p in prescriptions %}
+    <!-- Slip (this whole block is saved to PDF) -->
 
-        <div class="prescription-card">
+    <section class="slip" id="prescriptionSlip">
 
-            <div class="card-header">
+        <div class="slip-head">
 
-                <div>
+            <div class="logo"><i class="fa-solid fa-hospital"></i></div>
 
-                    <h2>
-                        <i class="fa-solid fa-file-prescription"></i>
-                        Prescription #{{ p.prescription_id }}
-                    </h2>
-
-                    <span class="date">
-                        {{ p.prescribed_date }}
-                    </span>
-
-                </div>
-
+            <div>
+                <h2>EMRS Hospital</h2>
+                <p>Electronic Medical Record System</p>
             </div>
 
-            <div class="details">
-
-                <div class="detail-row">
-                    <span class="label">Doctor</span>
-                    <span class="value">{{ p.doctor_name }}</span>
-                </div>
-
-                <div class="detail-row">
-                    <span class="label">Medicine</span>
-                    <span class="value">{{ p.medicine_name }}</span>
-                </div>
-
-                <div class="detail-row">
-                    <span class="label">Dosage</span>
-                    <span class="value">{{ p.dosage }}</span>
-                </div>
-
-                <div class="detail-row">
-                    <span class="label">Frequency</span>
-                    <span class="value">{{ p.frequency }}</span>
-                </div>
-
-                <div class="detail-row">
-                    <span class="label">Duration</span>
-                    <span class="value">{{ p.duration }}</span>
-                </div>
-
-                <div class="detail-row">
-                    <span class="label">Instructions</span>
-                    <span class="value">
-                        {{ p.instructions }}
-                    </span>
-                </div>
-
+            <div class="slip-meta">
+                Generated on
+                <strong id="generatedOn"></strong>
             </div>
 
         </div>
 
-        {% endfor %}
+        <div class="slip-title">
+            <span>PRESCRIPTION SLIP</span>
+            <span class="rx-mark">&#8478;</span>
+        </div>
+
+        {% if patient_name %}
+        <div class="slip-patient">
+            <strong>Patient:</strong> {{ patient_name }}
+        </div>
+        {% endif %}
+
+        <div class="table-box">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Rx No.</th>
+                        <th>Date</th>
+                        <th>Doctor</th>
+                        <th>Medicine</th>
+                        <th>Dosage</th>
+                        <th>Frequency</th>
+                        <th>Duration</th>
+                        <th>Instructions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                {% for p in prescriptions %}
+                    <tr>
+                        <td class="rx-no">#{{ p.prescription_id }}</td>
+                        <td>{{ p.prescribed_date }}</td>
+                        <td>Dr. {{ p.doctor_name }}</td>
+                        <td class="medicine">{{ p.medicine_name }}</td>
+                        <td>{{ p.dosage }}</td>
+                        <td>{{ p.frequency }}</td>
+                        <td>{{ p.duration }}</td>
+                        <td>{{ p.instructions }}</td>
+                    </tr>
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <div class="slip-sign">
+            <span>Valid only with doctor's advice</span>
+            <div class="sign-line">Doctor's Signature</div>
+        </div>
+
+        <div class="slip-foot">
+            This is a computer-generated prescription slip. Take medicines only as advised by your doctor.
+        </div>
+
+    </section>
+
+    <div class="actions">
+        <button type="button" class="pdf-btn" id="pdfBtn">
+            <i class="fa-solid fa-file-pdf"></i>
+            Save as PDF
+        </button>
+    </div>
 
     {% else %}
 
         <div class="empty-box">
-
             <i class="fa-solid fa-prescription-bottle-medical"></i>
-
-            <h2>No Prescriptions Available</h2>
-
-            <p>
-                Your doctor has not prescribed any medicines yet.
-            </p>
-
+            <h2>No prescriptions available</h2>
+            <p>Your doctor has not prescribed any medicines yet.</p>
         </div>
 
     {% endif %}
 
-    <!-- Back Button -->
-
     <div class="back-btn-container">
-
         <a href="{{ url_for('patient_dashboard') }}" class="back-btn">
-
             <i class="fa-solid fa-arrow-left"></i>
-
             Back to Dashboard
-
         </a>
-
     </div>
 
 </div>
+
+<footer>
+    © 2026 EMRS | Electronic Medical Record System
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<script>
+
+const slip = document.getElementById("prescriptionSlip");
+const pdfBtn = document.getElementById("pdfBtn");
+
+if (slip) {
+
+    const today = new Date();
+
+    document.getElementById("generatedOn").textContent =
+        today.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        });
+
+    pdfBtn.addEventListener("click", function () {
+
+        const stamp = today.toISOString().slice(0, 10);
+
+        // Detached clone: not affected by page scroll, centered container or overflow
+        const clone = slip.cloneNode(true);
+        clone.removeAttribute("id");
+        clone.classList.add("pdf-mode");
+
+        const options = {
+            margin: 10,
+            filename: "prescription_slip_" + stamp + ".pdf",
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                scrollX: 0,
+                scrollY: 0,
+                windowWidth: document.documentElement.clientWidth
+            },
+            jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+            pagebreak: { mode: ["css", "legacy"], avoid: "tr" }
+        };
+
+        pdfBtn.disabled = true;
+        window.scrollTo(0, 0);
+
+        html2pdf().set(options).from(clone).save().finally(function () {
+            pdfBtn.disabled = false;
+        });
+
+    });
+
+}
+
+</script>
 
 </body>
 

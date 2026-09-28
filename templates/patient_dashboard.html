@@ -15,6 +15,26 @@
 
     <link rel="stylesheet"
         href="{{ url_for('static', filename='css/patient_dashboard.css') }}">
+
+    <style>
+        .admin-edit-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 14px;
+            padding: 10px 18px;
+            background: #0b3d5c;
+            color: #fff;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .admin-edit-btn:hover {
+            background: #072b42;
+        }
+    </style>
 </head>
 
 <body>
@@ -131,6 +151,15 @@
                         Patient ID :
                         {{ patient.patient_id }}
                     </p>
+
+                    <!-- Admin only: edit this patient's profile -->
+                    {% if session.get('role') == 'admin' or session.get('admin_id') %}
+                    <a class="admin-edit-btn"
+                       href="{{ url_for('admin_edit_patient', patient_id=patient.patient_id) }}">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        Edit Patient
+                    </a>
+                    {% endif %}
 
                 </div>
 

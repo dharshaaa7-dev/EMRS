@@ -20,6 +20,24 @@
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
+    <style>
+
+        .uploaded-badge{
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            padding:6px 14px;
+            border-radius:4px;
+            border-left:4px solid #00703c;
+            background:#e3f3ea;
+            color:#00703c;
+            font-size:14px;
+            font-weight:600;
+            white-space:nowrap;
+        }
+
+    </style>
+
 </head>
 
 <body>
@@ -163,13 +181,24 @@
 
                         <td>
 
-                            <a href="{{ url_for('add_medical_record', appointment_id=record.appointment_id) }}"
-                               class="approve-btn">
+                            {% if record.record_uploaded %}
 
-                                <i class="fa-solid fa-file-medical"></i>
-                                Open Record
+                                <span class="uploaded-badge">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    Medical Record Uploaded
+                                </span>
 
-                            </a>
+                            {% else %}
+
+                                <a href="{{ url_for('add_medical_record', appointment_id=record.appointment_id) }}"
+                                   class="approve-btn">
+
+                                    <i class="fa-solid fa-file-medical"></i>
+                                    Add Medical Record
+
+                                </a>
+
+                            {% endif %}
 
                         </td>
 

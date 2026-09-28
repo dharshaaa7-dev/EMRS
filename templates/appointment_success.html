@@ -1,250 +1,376 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment Booked | EMRS</title>
 
-<title>Appointment Submitted | EMRS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        :root {
+            --navy: #0b3d5c;
+            --navy-dark: #072b42;
+            --teal: #0e8fa8;
+            --teal-soft: #e5f4f7;
+            --green: #1e8a55;
+            --green-soft: #e6f5ed;
+            --amber: #b7791f;
+            --amber-soft: #fdf3e0;
+            --ink: #1c2b36;
+            --muted: #5f7280;
+            --line: #d8e3e9;
+            --page: #eef3f6;
+            --white: #ffffff;
+        }
 
-<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:'Segoe UI',sans-serif;
-}
+        body {
+            font-family: "Public Sans", "Segoe UI", Arial, sans-serif;
+            color: var(--ink);
+            background: var(--page);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-body{
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background:
-    linear-gradient(rgba(5,30,60,.82),rgba(5,30,60,.82)),
-    url("https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1600&q=80");
-    background-size:cover;
-    background-position:center;
-    background-attachment:fixed;
-}
+        /* ---------- top bar ---------- */
+        .topbar {
+            background: var(--navy);
+            color: var(--white);
+            padding: 16px 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-body::before{
-    content:"";
-    position:fixed;
-    width:500px;
-    height:500px;
-    background:rgba(0,170,255,.18);
-    border-radius:50%;
-    top:-150px;
-    left:-150px;
-    filter:blur(120px);
-}
+        .topbar i { font-size: 22px; color: #7fd6e6; }
 
-body::after{
-    content:"";
-    position:fixed;
-    width:450px;
-    height:450px;
-    background:rgba(0,102,255,.18);
-    border-radius:50%;
-    right:-150px;
-    bottom:-150px;
-    filter:blur(120px);
-}
+        .topbar .brand {
+            font-family: "Source Serif 4", Georgia, serif;
+            font-size: 20px;
+            font-weight: 700;
+        }
 
-.success-card{
-    width:680px;
-    max-width:92%;
-    background:white;
-    border-radius:25px;
-    padding:50px;
-    text-align:center;
-    box-shadow:0 25px 60px rgba(0,0,0,.25);
-}
+        .topbar .sub {
+            margin-left: auto;
+            font-size: 13px;
+            color: #b9d3e0;
+        }
 
-.icon{
-    width:110px;
-    height:110px;
-    margin:auto;
-    border-radius:50%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background:linear-gradient(135deg,#00b4ff,#0066ff);
-    color:white;
-    font-size:52px;
-}
+        /* ---------- main ---------- */
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            padding: 36px 16px 48px;
+        }
 
-h1{
-    margin-top:25px;
-    color:#0b4f8a;
-    font-size:36px;
-}
+        .wrap { width: 100%; max-width: 640px; }
 
-.subtitle{
-    margin-top:12px;
-    color:#666;
-    font-size:18px;
-}
+        .slip {
+            background: var(--white);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(11, 61, 92, 0.10);
+        }
 
-.info-box{
-    margin-top:35px;
-    background:#eef8ff;
-    border-left:5px solid #0d6efd;
-    padding:22px;
-    border-radius:12px;
-    text-align:left;
-}
+        /* confirmation header */
+        .confirm {
+            text-align: center;
+            padding: 34px 28px 26px;
+            border-bottom: 1px solid var(--line);
+        }
 
-.info-box p{
-    margin:12px 0;
-    color:#333;
-    line-height:1.7;
-}
+        .tick {
+            width: 68px;
+            height: 68px;
+            margin: 0 auto 16px;
+            border-radius: 50%;
+            background: var(--green-soft);
+            color: var(--green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            border: 2px solid #bfe6d0;
+        }
 
-.info-box i{
-    color:#0d6efd;
-    margin-right:10px;
-}
+        .confirm h1 {
+            font-family: "Source Serif 4", Georgia, serif;
+            font-size: 28px;
+            color: var(--navy);
+            margin-bottom: 8px;
+        }
 
-.alert-box{
-    margin-top:25px;
-    background:#fff8e5;
-    border-left:5px solid #ffc107;
-    padding:20px;
-    border-radius:12px;
-    text-align:left;
-}
+        .confirm p {
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.55;
+            max-width: 460px;
+            margin: 0 auto;
+        }
 
-.alert-box h3{
-    color:#b77900;
-    margin-bottom:10px;
-}
+        /* reference row */
+        .ref {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 20px 28px;
+            background: var(--teal-soft);
+            border-bottom: 1px dashed #9fcfda;
+        }
 
-.alert-box p{
-    margin:8px 0;
-    color:#555;
-    line-height:1.7;
-}
+        .ref .label {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 2px;
+        }
 
-.button-group{
-    margin-top:35px;
-    display:flex;
-    justify-content:center;
-    gap:18px;
-    flex-wrap:wrap;
-}
+        .ref .number {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--navy);
+            letter-spacing: 0.5px;
+        }
 
-.btn{
-    padding:15px 30px;
-    border-radius:12px;
-    text-decoration:none;
-    font-weight:600;
-    transition:.3s;
-}
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: var(--amber-soft);
+            color: var(--amber);
+            border: 1px solid #efd9a8;
+            font-size: 14px;
+            font-weight: 600;
+        }
 
-.home{
-    background:#0d6efd;
-    color:white;
-}
+        /* what happens next */
+        .next {
+            padding: 24px 28px 8px;
+        }
 
-.book{
-    background:white;
-    border:2px solid #0d6efd;
-    color:#0d6efd;
-}
+        .next h2 {
+            font-size: 17px;
+            color: var(--navy);
+            margin-bottom: 14px;
+        }
 
-.btn:hover{
-    transform:translateY(-3px);
-    box-shadow:0 10px 20px rgba(0,0,0,.2);
-}
+        .next ol {
+            list-style: none;
+            counter-reset: step;
+        }
 
-.footer{
-    margin-top:35px;
-    color:#777;
-    font-size:14px;
-}
+        .next li {
+            counter-increment: step;
+            position: relative;
+            padding: 0 0 16px 44px;
+            font-size: 14.5px;
+            line-height: 1.55;
+            color: var(--ink);
+        }
 
-</style>
+        .next li::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--navy);
+            color: var(--white);
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
+        .next li::after {
+            content: "";
+            position: absolute;
+            left: 13px;
+            top: 30px;
+            bottom: 2px;
+            width: 2px;
+            background: var(--line);
+        }
+
+        .next li:last-child::after { display: none; }
+
+        .next li strong { color: var(--navy); font-weight: 600; }
+
+        /* reminder box */
+        .reminder {
+            margin: 6px 28px 24px;
+            padding: 14px 16px;
+            border-left: 4px solid var(--teal);
+            background: #f6fafb;
+            border-radius: 0 6px 6px 0;
+            font-size: 13.5px;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        .reminder i { color: var(--teal); margin-right: 6px; }
+
+        /* actions */
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 20px 28px 28px;
+            border-top: 1px solid var(--line);
+            background: #fafcfd;
+        }
+
+        .btn {
+            flex: 1 1 180px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            padding: 13px 18px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1.5px solid transparent;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .btn-primary { background: var(--navy); color: var(--white); }
+        .btn-primary:hover { background: var(--navy-dark); }
+
+        .btn-outline {
+            background: var(--white);
+            color: var(--navy);
+            border-color: var(--navy);
+        }
+        .btn-outline:hover { background: var(--teal-soft); }
+
+        .btn-link {
+            flex: 1 1 100%;
+            background: none;
+            color: var(--muted);
+            font-weight: 500;
+            font-size: 14px;
+            padding: 6px;
+        }
+        .btn-link:hover { color: var(--navy); }
+
+        .btn:focus-visible {
+            outline: 3px solid #7fd6e6;
+            outline-offset: 2px;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 12.5px;
+            color: var(--muted);
+            padding: 0 16px 24px;
+        }
+
+        @media (max-width: 480px) {
+            .topbar { padding: 14px 16px; }
+            .topbar .sub { display: none; }
+            .confirm, .ref, .next, .actions { padding-left: 18px; padding-right: 18px; }
+            .reminder { margin-left: 18px; margin-right: 18px; }
+            .confirm h1 { font-size: 24px; }
+        }
+    </style>
 </head>
 
 <body>
 
-<div class="success-card">
+<header class="topbar">
+    <i class="fa-solid fa-hospital"></i>
+    <span class="brand">EMRS</span>
+    <span class="sub">Electronic Medical Record System</span>
+</header>
 
-<div class="icon">
-    <i class="fa-solid fa-circle-check"></i>
-</div>
+<main>
+    <div class="wrap">
 
-<h1>Appointment Submitted</h1>
+        <section class="slip">
 
-<p class="subtitle">
-Your appointment request has been submitted successfully.
-</p>
+            <div class="confirm">
+                <div class="tick"><i class="fa-solid fa-check"></i></div>
+                <h1>Appointment booked</h1>
+                <p>
+                    Your request has been sent to the doctor.
+                    A confirmation email is on its way to your registered address.
+                </p>
+            </div>
 
-<div class="info-box">
+            <div class="ref">
+                <div>
+                    <div class="label">Appointment reference</div>
+                    <div class="number">
+                        {% if appointment_id %}APT-{{ '%06d'|format(appointment_id) }}{% else %}Not available{% endif %}
+                    </div>
+                </div>
+                <div class="status">
+                    <i class="fa-solid fa-hourglass-half"></i>
+                    Pending doctor approval
+                </div>
+            </div>
 
-<p>
-<i class="fa-solid fa-envelope-circle-check"></i>
-A confirmation email will be sent after your appointment is approved.
-</p>
+            <div class="next">
+                <h2>What happens next</h2>
+                <ol>
+                    <li>
+                        <strong>The doctor reviews your request.</strong>
+                        You will get an update once it is approved or rejected.
+                    </li>
+                    <li>
+                        <strong>Check your status.</strong>
+                        Open My Appointments to see the latest status and download your slip.
+                    </li>
+                    <li>
+                        <strong>Visit the hospital.</strong>
+                        Carry your appointment slip and a photo ID.
+                    </li>
+                </ol>
+            </div>
 
-<p>
-<i class="fa-solid fa-user-doctor"></i>
-Your request has been forwarded to the assigned doctor for approval.
-</p>
+            <div class="reminder">
+                <i class="fa-solid fa-circle-info"></i>
+                Please arrive 15 minutes before your scheduled time and bring any earlier
+                prescriptions or lab reports.
+            </div>
 
-<p>
-<i class="fa-solid fa-database"></i>
-Your Electronic Medical Records (EMR) are securely available to the doctor through EMRS.
-</p>
+            <div class="actions">
+                <a class="btn btn-primary" href="{{ url_for('my_appointments') }}">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    My appointments
+                </a>
 
-</div>
+                <a class="btn btn-link" href="{{ url_for('patient_dashboard') }}">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Back to dashboard
+                </a>
+            </div>
 
-<div class="alert-box">
+        </section>
 
-<h3>
-<i class="fa-solid fa-hourglass-half"></i>
- Waiting for Doctor Approval
-</h3>
+    </div>
+</main>
 
-<p>
-Your appointment is currently <b>Pending</b>.
-</p>
-
-<p>
-Once the doctor approves your appointment, its status will automatically change to <b>Approved</b>.
-</p>
-
-<p>
-After approval, you can download your official Appointment Slip from the <b>My Appointments</b> page.
-</p>
-
-</div>
-
-<div class="button-group">
-
-<a href="{{ url_for('patient_dashboard') }}" class="btn home">
-<i class="fa-solid fa-house"></i>
-&nbsp; Dashboard
-</a>
-
-<a href="{{ url_for('book_appointment') }}" class="btn book">
-<i class="fa-solid fa-calendar-plus"></i>
-&nbsp; Book Another
-</a>
-
-</div>
-
-<div class="footer">
-EMRS • Electronic Medical Record System
-</div>
-
-</div>
+<footer>
+    This is a system generated confirmation from EMRS.
+</footer>
 
 </body>
 </html>

@@ -11,6 +11,21 @@
 
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+    <style>
+        .admin-id {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: #e5f4f7;
+            color: #0b3d5c;
+            font-size: 13px;
+            font-weight: 500;
+        }
+    </style>
 </head>
 
 <body>
@@ -74,6 +89,13 @@
     <div class="header">
         <h1>Admin Dashboard</h1>
         <p>Welcome back, {{ admin.full_name }}</p>
+
+        <!-- Admin ID (the ID saved for this admin) -->
+        <span class="admin-id">
+            <i class="fa-solid fa-id-badge"></i>
+            Admin ID :
+            {{ admin.admin_id if admin.admin_id is defined else admin.id }}
+        </span>
     </div>
 
     <div class="cards">
@@ -119,6 +141,11 @@
         </div>
 
         <table>
+
+            <tr>
+                <td>Admin ID</td>
+                <td>{{ admin.admin_id if admin.admin_id is defined else admin.id }}</td>
+            </tr>
 
             <tr>
                 <td>Full Name</td>

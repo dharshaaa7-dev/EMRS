@@ -32,7 +32,25 @@
 Book your appointment using Text or Voice.
 </p>
 
-<form method="POST" id="appointmentForm">
+<!-- ================= Error / Success messages (NEW) ================= -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        <div style="
+            padding:12px 14px;
+            margin:10px 0 16px;
+            border-radius:8px;
+            font-size:14px;
+            background: {{ '#fdecec' if category == 'danger' else '#e8f7ee' }};
+            color: {{ '#b42318' if category == 'danger' else '#1e7a46' }};
+            border:1px solid {{ '#f5c2c0' if category == 'danger' else '#b7e4c7' }};">
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<form method="POST" id="appointmentForm" action="{{ url_for('book_appointment') }}">
 
 <!-- ================= Appointment Date ================= -->
 
@@ -45,6 +63,7 @@ Book your appointment using Text or Voice.
     <input
         type="date"
         name="appointment_date"
+        value="{{ form_date or '' }}"
         required>
 </div>
 
@@ -128,7 +147,7 @@ Book your appointment using Text or Voice.
         id="reason"
         name="reason"
         placeholder="Describe your symptoms..."
-        onkeyup="scheduleAnalyze()"></textarea>
+        onkeyup="scheduleAnalyze()">{{ form_reason or '' }}</textarea>
 </div>
 
 <!-- ================= VOICE ================= -->
@@ -162,6 +181,7 @@ type="text"
 id="department"
 name="department"
 placeholder="AI Suggested Department"
+value="{{ (suggested_department or '')|capitalize }}"
 readonly>
 
 </div>
@@ -223,7 +243,7 @@ readonly>
     {% for doctor in doctors %}
         <option
             value="{{ doctor.doctor_id }}"
-            data-department="{{ doctor.specialization|lower }}">
+            data-department="{{ (doctor.specialization or '')|lower }}">
             {{ doctor.full_name }} ({{ doctor.specialization }})
         </option>
     {% endfor %}
@@ -271,6 +291,9 @@ readonly>
 </div>
 <script>
 
+const bookBtn = document.getElementById("bookBtn");
+const bookBtnHTML = bookBtn.innerHTML;
+
 function showText() {
     document.getElementById("textBox").style.display = "block";
     document.getElementById("voiceBox").style.display = "none";
@@ -281,11 +304,37 @@ function showVoice() {
     document.getElementById("voiceBox").style.display = "block";
 }
 
-// Stop double-clicks from creating duplicate appointments
-document.getElementById("appointmentForm").addEventListener("submit", function () {
-    const btn = document.getElementById("bookBtn");
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Booking...';
+// Validate, then stop double-clicks from creating duplicate appointments.
+document.getElementById("appointmentForm").addEventListener("submit", function (e) {
+
+    const doctor = document.getElementById("doctor_id").value;
+    const reason = document.getElementById("reason").value.trim();
+
+    if (!reason) {
+        e.preventDefault();
+        alert("Please describe your problem (text or voice) before booking.");
+        return;
+    }
+
+    if (!doctor) {
+        e.preventDefault();
+        alert("Please select a doctor before booking.");
+        return;
+    }
+
+    // Disable AFTER the browser has started sending the form, so the
+    // submit is never cancelled by the disabled button.
+    setTimeout(function () {
+        bookBtn.disabled = true;
+        bookBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Booking...';
+    }, 0);
+});
+
+// If the browser shows this page again from cache (Back button), make the
+// button usable again.
+window.addEventListener("pageshow", function () {
+    bookBtn.disabled = false;
+    bookBtn.innerHTML = bookBtnHTML;
 });
 
 // ============================================================
@@ -342,12 +391,51 @@ const allDoctorsFallback = [
 // Populated by fetchDoctorsForHospital() below.
 let currentHospitalDoctors = [];
 
+// The AI returns names like "cardiologist" / "orthopedics" but doctors
+// register a free-text specialization ("Cardiology", "Orthopaedics"...).
+// So we match on a short stem instead of an exact string.
+const deptStems = {
+    "cardiologist": "cardio",
+    "neurologist": "neuro",
+    "dermatology": "derma",
+    "orthopedics": "ortho",
+    "gastroenterology": "gastro",
+    "ophthalmology": "ophthal",
+    "general physician": "general"
+};
+
+function deptMatches(docDept, wanted) {
+    docDept = (docDept || "").trim().toLowerCase();
+    if (!docDept) return false;
+    if (docDept === wanted) return true;
+    if (wanted === "ent") return /\bent\b|otolaryng/.test(docDept);
+    const stem = deptStems[wanted];
+    return stem ? docDept.includes(stem) : false;
+}
+
+function fillDoctorSelect(list, keepValue) {
+
+    const select = document.getElementById("doctor_id");
+    select.innerHTML = '<option value="">Select Doctor</option>';
+
+    list.forEach(function (doc) {
+        const option = document.createElement("option");
+        option.value = doc.id;
+        option.textContent = doc.name + " (" + (doc.dept || "").trim() + ")";
+        select.appendChild(option);
+    });
+
+    // keep the doctor the patient already picked, if still in the list
+    if (keepValue && list.some(d => d.id === keepValue)) {
+        select.value = keepValue;
+    }
+}
+
 function filterDoctors(department){
 
     const select = document.getElementById("doctor_id");
+    const previous = select.value;
     const wanted = (department || "").trim().toLowerCase();
-
-    select.innerHTML = '<option value="">Select Doctor</option>';
 
     // If a hospital has been selected, only show doctors that belong to
     // THAT hospital. Otherwise fall back to every registered doctor.
@@ -355,28 +443,11 @@ function filterDoctors(department){
         ? currentHospitalDoctors
         : allDoctorsFallback;
 
-    let matches = 0;
+    const matched = pool.filter(doc => deptMatches(doc.dept, wanted));
 
-    pool.forEach(function(doc){
-        if((doc.dept || "").trim().toLowerCase() === wanted){
-
-            let option = document.createElement("option");
-            option.value = doc.id;
-            option.textContent = doc.name + " (" + doc.dept.trim() + ")";
-            select.appendChild(option);
-            matches++;
-
-        }
-    });
-
-    if (matches === 0) {
-        const option = document.createElement("option");
-        option.value = "";
-        option.textContent = currentHospitalDoctors.length > 0
-            ? "No " + department + " available at this hospital"
-            : "No " + department + " doctor found";
-        select.appendChild(option);
-    }
+    // No matching specialization -> show ALL doctors so booking is never
+    // blocked by a spelling difference.
+    fillDoctorSelect(matched.length > 0 ? matched : pool, previous);
 }
 
 function fetchDoctorsForHospital(hospitalName) {
@@ -404,14 +475,7 @@ function fetchDoctorsForHospital(hospitalName) {
             } else if (currentHospitalDoctors.length > 0) {
                 // No department detected yet -- show every doctor at
                 // this hospital so the patient can still pick one.
-                const select = document.getElementById("doctor_id");
-                select.innerHTML = '<option value="">Select Doctor</option>';
-                currentHospitalDoctors.forEach(doc => {
-                    const option = document.createElement("option");
-                    option.value = doc.id;
-                    option.textContent = doc.name + " (" + doc.dept.trim() + ")";
-                    select.appendChild(option);
-                });
+                fillDoctorSelect(currentHospitalDoctors, "");
             }
         })
         .catch(err => console.error("Could not load doctors for hospital:", err));

@@ -17,6 +17,21 @@
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
+    <style>
+        .doctor-id {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: #e5f4f7;
+            color: #0b3d5c;
+            font-size: 13px;
+            font-weight: 500;
+        }
+    </style>
+
 </head>
 
 <body>
@@ -116,6 +131,13 @@
                 <p>
                     {{ session.get('specialization','General Physician') }}
                 </p>
+
+                <!-- Doctor ID (the ID saved for this doctor) -->
+                <span class="doctor-id">
+                    <i class="fa-solid fa-id-badge"></i>
+                    Doctor ID :
+                    {{ doctor_id if doctor_id is defined else session.get('doctor_id', '-') }}
+                </span>
 
             </div>
 

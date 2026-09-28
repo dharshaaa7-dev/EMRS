@@ -1,9 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash, send_file
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash, send_file, g
 import mysql.connector
+from mysql.connector import pooling
 import random
 import re
 import os
 import threading
+import traceback
 
 from dotenv import load_dotenv
 load_dotenv(r"D:\EMRS\.env")   # <-- loads DB_HOST, DB_PORT, MAIL_USERNAME etc. from the .env file
@@ -98,9 +100,21 @@ def send_mail_with_timeout(msg, timeout=12):
     return result["ok"], result["error"]
 
 
-# ================= DATABASE CONNECTION ================= #
+# ================= DATABASE CONNECTION (POOL, ONE CONNECTION PER REQUEST) ================= #
+# WHY THIS CHANGED:
+# The old code used ONE global connection + ONE global cursor shared by every
+# request. The booking page fires several AJAX calls at the same moment
+# (/api/get_districts, /api/get_cities, /api/get_hospitals_by_location ...).
+# Flask's dev server is multi-threaded, so those calls used the same cursor
+# at the same time and overwrote each other's results. That is what made the
+# City dropdown randomly stay disabled / empty.
+#
+# Now every request gets its OWN connection from a small pool, and hands it
+# back automatically when the request ends. The rest of the code still uses
+# the names `db` and `cursor` exactly as before - they are proxies that point
+# to the current request's connection / cursor.
 
-db = mysql.connector.connect(
+DB_CONFIG = dict(
     host=os.getenv("DB_HOST"),
     port=int(os.getenv("DB_PORT")),
     user=os.getenv("DB_USER"),
@@ -111,39 +125,90 @@ db = mysql.connector.connect(
     autocommit=True
 )
 
-cursor = db.cursor(dictionary=True, buffered=True)
+db_pool = pooling.MySQLConnectionPool(
+    pool_name="emrs_pool",
+    pool_size=8,
+    pool_reset_session=True,
+    **DB_CONFIG
+)
 
-# ================= KEEP DB CONNECTION ALIVE ================= #
-# Aiven (and most cloud MySQL) closes idle connections after a while.
-# Since this app uses one global connection, we ping/reconnect it
-# before every request so long-idle sessions don't crash with
-# "Lost connection to MySQL server during query".
 
-@app.before_request
-def ensure_db_connection():
-    if request.endpoint == "static":
-        return
+def _get_conn():
+    conn = g.get("_db_conn")
 
-    global db, cursor
+    if conn is None:
+        conn = db_pool.get_connection()
+
+        # Aiven (and most cloud MySQL) closes idle connections after a
+        # while, so ping/reconnect before using it.
+        try:
+            conn.ping(reconnect=True, attempts=3, delay=2)
+        except mysql.connector.Error as e:
+            print("DB ping failed :", e)
+
+        g._db_conn = conn
+
+    return conn
+
+
+def _get_cursor():
+    cur = g.get("_db_cursor")
+
+    if cur is None:
+        cur = _get_conn().cursor(dictionary=True, buffered=True)
+        g._db_cursor = cur
+
+    return cur
+
+
+class _DBProxy:
+    def __getattr__(self, name):
+        return getattr(_get_conn(), name)
+
+
+class _CursorProxy:
+    def __getattr__(self, name):
+        return getattr(_get_cursor(), name)
+
+
+db = _DBProxy()
+cursor = _CursorProxy()
+
+
+@app.teardown_appcontext
+def close_db_connection(exc=None):
+    cur = g.pop("_db_cursor", None)
+    conn = g.pop("_db_conn", None)
 
     try:
-        db.ping(reconnect=True, attempts=3, delay=2)
+        if cur is not None:
+            cur.close()
+    except Exception:
+        pass
 
-    except mysql.connector.Error as e:
-        print("DB Reconnect Failed, creating new connection :", e)
+    try:
+        if conn is not None:
+            conn.close()      # for a pooled connection this returns it to the pool
+    except Exception:
+        pass
 
-        db = mysql.connector.connect(
-            host=os.getenv("DB_HOST"),
-            port=int(os.getenv("DB_PORT")),
-            user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD"),
-            database=os.getenv("DB_NAME"),
-            ssl_ca="ca.pem",
-            connection_timeout=30,
-            autocommit=True
-        )
 
-    cursor = db.cursor(dictionary=True, buffered=True)
+# ================= DEBUG LOGGER (booking flow) ================= #
+# Prints one line per request for the booking pages so we can see exactly
+# what the server answered: 302 -> redirected, 200 -> same page re-rendered.
+# (FIX: a duplicate stub of the /download_slip route used to sit here and
+#  caused "View function mapping is overwriting an existing endpoint
+#  function: download_slip". The real route is further below.)
+@app.after_request
+def log_booking_flow(response):
+    if request.path in ("/book_appointment", "/appointment_success"):
+        print(">>> [%s] %s -> HTTP %s  Location=%s" % (
+            request.method, request.path, response.status_code,
+            response.headers.get("Location")
+        ))
+    return response
+
+
 # ================= LAB REPORT PDF UPLOAD CONFIG ================= #
 UPLOAD_FOLDER = os.path.join("static", "uploads", "lab_reports")
 ALLOWED_EXTENSIONS = {"pdf"}
@@ -286,9 +351,11 @@ def doctor_register():
         if cursor.fetchone():
             return "\u274c Username already exists"
 
-        # doctor_id is generated by the MySQL trigger `before_doctor_insert`
-        # (e.g. RASI01). We pass "" because the column is NOT NULL; the
-        # trigger overwrites it with the real ID.
+        # FIX: doctor_id is now generated here in Python (e.g. "KAT001"-style
+        # prefix + number) instead of relying on a MySQL trigger. The trigger
+        # was missing on the Aiven DB, so "" was being saved as the ID.
+        new_doctor_id = generate_doctor_id(full_name, hospital_city)
+
         sql = """
         INSERT INTO doctor
         (
@@ -313,7 +380,7 @@ def doctor_register():
         """
 
         values = (
-            "",
+            new_doctor_id,
             full_name,
             username,
             email,
@@ -331,14 +398,7 @@ def doctor_register():
         cursor.execute(sql, values)
         db.commit()
 
-        # lastrowid does not work for text IDs, so fetch by username
-        cursor.execute(
-            "SELECT doctor_id FROM doctor WHERE username=%s",
-            (username,)
-        )
-        doctor_id = cursor.fetchone()["doctor_id"]
-
-        session["doctor_id"] = doctor_id
+        session["doctor_id"] = new_doctor_id
         session["doctor_name"] = full_name
 
         return redirect(url_for("doctor_dashboard"))
@@ -403,6 +463,7 @@ def doctor_dashboard():
     return render_template(
         "doctor_dashboard.html",
         doctor=doctor,
+        doctor_id=doctor_id,
         appointments=appointments,
         total_patients=total_patients,
         pending_count=pending_count,
@@ -1105,9 +1166,11 @@ def admin_register():
     if cursor.fetchone():
         return "\u274c Employee ID already exists"
 
-    # admin_id is generated by the MySQL trigger `before_admin_insert`
-    # (e.g. RACH01). We pass "" because the column is NOT NULL; the
-    # trigger overwrites it with the real ID.
+    # FIX: admin_id is now generated here in Python instead of relying on
+    # a MySQL trigger (the trigger may be missing on the Aiven DB, which
+    # would save "" as the ID).
+    new_admin_id = generate_admin_id(full_name, city)
+
     sql = """
     INSERT INTO admin
     (
@@ -1133,7 +1196,7 @@ def admin_register():
     """
 
     values = (
-        "",
+        new_admin_id,
         full_name,
         username,
         employee_id,
@@ -1152,12 +1215,7 @@ def admin_register():
     cursor.execute(sql, values)
     db.commit()
 
-    # lastrowid does not work for text IDs, so fetch by username
-    cursor.execute(
-        "SELECT admin_id FROM admin WHERE username=%s",
-        (username,)
-    )
-    session["admin_id"] = cursor.fetchone()["admin_id"]
+    session["admin_id"] = new_admin_id
     session["admin_name"] = full_name
 
     return redirect(url_for("admin_dashboard"))
@@ -1271,6 +1329,98 @@ def admin_patient():
         prescriptions=prescriptions,
         lab_reports=lab_reports_list
     )
+
+# ================= ADMIN EDIT PATIENT PROFILE ================= #
+# patient_id is a text ID like "RAAP01", so this must NOT use <int:...>
+@app.route("/admin_edit_patient/<patient_id>", methods=["GET", "POST"])
+def admin_edit_patient(patient_id):
+
+    if "admin_id" not in session:
+        return redirect(url_for("admin_login"))
+
+    cursor.execute(
+        "SELECT * FROM patient WHERE patient_id=%s",
+        (patient_id,)
+    )
+    patient = cursor.fetchone()
+
+    if not patient:
+        flash("Patient Not Found!", "danger")
+        return redirect(url_for("admin_patient"))
+
+    if request.method == "POST":
+
+        full_name = request.form["full_name"]
+        email = request.form["email"]
+        mobile = request.form["mobile"]
+        dob = request.form["dob"]
+        gender = request.form["gender"]
+        blood_group = request.form["blood_group"]
+
+        address = request.form["address"]
+        city = request.form["city"]
+        district = request.form["district"]
+        state = request.form["state"]
+        pincode = request.form["pincode"]
+
+        emergency_name = request.form["emergency_name"]
+        emergency_phone = request.form["emergency_phone"]
+
+        # email must stay unique across other patients
+        cursor.execute("""
+            SELECT patient_id FROM patient
+            WHERE email=%s AND patient_id!=%s
+        """, (email, patient_id))
+
+        if cursor.fetchone():
+            flash("This email is already used by another patient.", "danger")
+            return redirect(url_for("admin_edit_patient", patient_id=patient_id))
+
+        cursor.execute("""
+            UPDATE patient
+            SET
+                full_name=%s,
+                email=%s,
+                mobile=%s,
+                dob=%s,
+                gender=%s,
+                blood_group=%s,
+                address=%s,
+                city=%s,
+                district=%s,
+                state=%s,
+                pincode=%s,
+                emergency_name=%s,
+                emergency_phone=%s
+            WHERE patient_id=%s
+        """, (
+            full_name,
+            email,
+            mobile,
+            dob,
+            gender,
+            blood_group,
+            address,
+            city,
+            district,
+            state,
+            pincode,
+            emergency_name,
+            emergency_phone,
+            patient_id
+        ))
+
+        db.commit()
+
+        flash("Patient Details Updated Successfully!", "success")
+
+        return redirect(url_for("admin_edit_patient", patient_id=patient_id))
+
+    return render_template(
+        "admin_edit_patient.html",
+        patient=patient
+    )
+
 # ================= ADMIN DOCTOR PROFILE (VIEW ONLY) ================= #
 @app.route("/admin_doctor", methods=["GET", "POST"])
 def admin_doctor():
@@ -1851,34 +2001,54 @@ TAMIL_NADU_DISTRICTS = [
 
 @app.route("/api/get_districts")
 def get_districts():
+    # FIX: earlier this returned ALL 38 Tamil Nadu districts. Most of them
+    # have no registered hospital, so after choosing one the City box was
+    # disabled with "No hospitals registered here yet" and looked "paused".
+    # Now only districts that really have a doctor/hospital registered are
+    # listed, so the City dropdown always has something to show.
 
     cursor.execute("""
         SELECT DISTINCT hospital_district
         FROM doctor
-        WHERE hospital_district IS NOT NULL AND hospital_district != ''
+        WHERE hospital_district IS NOT NULL AND TRIM(hospital_district) != ''
     """)
 
     db_districts = [row["hospital_district"] for row in cursor.fetchall()]
 
-    all_districts = sorted(set(TAMIL_NADU_DISTRICTS) | set(db_districts))
+    # Use the standard spelling from the list above when it matches
+    # (case-insensitive), so "vellore" and "Vellore" don't show twice.
+    canonical = {d.lower(): d for d in TAMIL_NADU_DISTRICTS}
+    found = {}
 
-    return jsonify(all_districts)
+    for d in db_districts:
+        clean = d.strip()
+        found[clean.lower()] = canonical.get(clean.lower(), clean)
+
+    # Nothing registered yet -> fall back to the full list
+    if not found:
+        return jsonify(sorted(TAMIL_NADU_DISTRICTS))
+
+    return jsonify(sorted(found.values()))
 
 
 @app.route("/api/get_cities/<district>")
 def get_cities(district):
 
     cursor.execute("""
-        SELECT DISTINCT hospital_city
+        SELECT DISTINCT TRIM(hospital_city) AS hospital_city
         FROM doctor
         WHERE TRIM(LOWER(hospital_district))=TRIM(LOWER(%s))
-        AND hospital_city IS NOT NULL AND hospital_city != ''
+        AND hospital_city IS NOT NULL AND TRIM(hospital_city) != ''
         ORDER BY hospital_city
     """, (district,))
 
-    cities = [row["hospital_city"] for row in cursor.fetchall()]
+    # remove duplicates that only differ by upper/lower case
+    seen = {}
+    for row in cursor.fetchall():
+        city = row["hospital_city"]
+        seen.setdefault(city.lower(), city)
 
-    return jsonify(cities)
+    return jsonify(sorted(seen.values()))
 
 
 @app.route("/api/get_hospitals_by_location")
@@ -2060,7 +2230,7 @@ def medical_records():
         doctors_consulted=doctors_consulted
     )
 
-# ================= BOOK APPOINTMENT ================= #
+# ================= BOOK APPOINTMENT (FIXED) ================= #
 
 @app.route("/book_appointment", methods=["GET", "POST"])
 def book_appointment():
@@ -2082,11 +2252,9 @@ def book_appointment():
     if patient is None:
         return "Patient not found"
 
-    # Patients no longer register with a fixed hospital, so the hospital
-    # is chosen at booking time (via the hospital_name field in the form).
-    hospital_name = ""
-    suggested_department = ""
-
+    # ALWAYS send the full doctor list to the page. The JavaScript in the
+    # template filters it by hospital / department, so the server must not
+    # shrink it (that was leaving the dropdown empty after a failed submit).
     cursor.execute("""
         SELECT
             doctor_id,
@@ -2098,45 +2266,83 @@ def book_appointment():
 
     doctors = cursor.fetchall()
 
+    hospital_name = ""
+    suggested_department = ""
+    form_date = ""
+    form_reason = ""
+
     if request.method == "POST":
 
-        appointment_date = request.form["appointment_date"]
+        print(">>> POST reached book_appointment :", dict(request.form))
+        print(">>> session patient_id =", session.get("patient_id"))
 
-        hour = int(request.form["hour"])
-        minute = int(request.form["minute"])
-        ampm = request.form["ampm"]
+        appointment_date = request.form.get("appointment_date", "").strip()
+        reason = request.form.get("reason", "").strip()
+        doctor_id = request.form.get("doctor_id", "").strip()
+        hospital_name = request.form.get("hospital_name", "").strip()
 
-        if ampm == "PM" and hour != 12:
-            hour += 12
-        elif ampm == "AM" and hour == 12:
-            hour = 0
-
-        appointment_time = f"{hour:02}:{minute:02}:00"
-
-        reason = request.form["reason"]
-
-        selected_hospital = request.form.get("hospital_name", "").strip()
-        if selected_hospital:
-            hospital_name = selected_hospital
+        form_date = appointment_date
+        form_reason = reason
 
         suggested_department = suggest_department(reason)
 
-        cursor.execute("""
-            SELECT
-                doctor_id,
-                full_name,
-                specialization
-            FROM doctor
-            WHERE LOWER(TRIM(specialization))=LOWER(%s)
-            ORDER BY full_name
-        """, (suggested_department,))
+        # ---------- validation: show a message instead of silently reloading ----------
+        error = None
+        appointment_time = None
 
-        doctors = cursor.fetchall()
+        try:
+            hour = int(request.form["hour"])
+            minute = int(request.form["minute"])
+            ampm = request.form["ampm"]
 
-        doctor_id = request.form.get("doctor_id")
+            if ampm == "PM" and hour != 12:
+                hour += 12
+            elif ampm == "AM" and hour == 12:
+                hour = 0
 
-        if doctor_id:
+            appointment_time = f"{hour:02}:{minute:02}:00"
+        except (KeyError, ValueError):
+            error = "Please select a valid appointment time."
 
+        if not error and not appointment_date:
+            error = "Please select the appointment date."
+        elif not error and not reason:
+            error = "Please describe your problem (text or voice)."
+        elif not error and not doctor_id:
+            error = "Please select a doctor."
+
+        doctor = None
+        if not error:
+            cursor.execute("""
+                SELECT doctor_id, full_name, email, hospital_name
+                FROM doctor
+                WHERE doctor_id=%s
+            """, (doctor_id,))
+            doctor = cursor.fetchone()
+
+            if not doctor:
+                error = "Selected doctor was not found. Please choose again."
+
+        if error:
+            print(">>> VALIDATION ERROR :", error)
+            flash(error, "danger")
+            return render_template(
+                "book_appointment.html",
+                doctors=doctors,
+                suggested_department=suggested_department,
+                hospital_name=hospital_name,
+                form_date=form_date,
+                form_reason=form_reason
+            )
+
+        # if the patient left the hospital box empty, use the doctor's hospital
+        if not hospital_name:
+            hospital_name = doctor.get("hospital_name") or ""
+
+        # ---------- save appointment ----------
+        appointment_id = None
+
+        try:
             cursor.execute("""
                 INSERT INTO appointment
                 (
@@ -2164,17 +2370,33 @@ def book_appointment():
 
             appointment_id = cursor.lastrowid
 
-            cursor.execute("""
-                SELECT
-                    full_name,
-                    email
-                FROM doctor
-                WHERE doctor_id=%s
-            """, (doctor_id,))
+            # lastrowid can be 0 / None in some setups -> look the row up
+            if not appointment_id:
+                cursor.execute("""
+                    SELECT MAX(appointment_id) AS last_id
+                    FROM appointment
+                    WHERE patient_id=%s AND doctor_id=%s
+                """, (patient_id, doctor_id))
+                row = cursor.fetchone()
+                appointment_id = row["last_id"] if row else None
 
-            doctor = cursor.fetchone()
+        except Exception as e:
+            # Print the FULL error in the terminal AND show it on the page
+            print("Appointment Insert Error :", e)
+            traceback.print_exc()
+            flash("Could not book the appointment: " + str(e), "danger")
+            return render_template(
+                "book_appointment.html",
+                doctors=doctors,
+                suggested_department=suggested_department,
+                hospital_name=hospital_name,
+                form_date=form_date,
+                form_reason=form_reason
+            )
 
-            if doctor and doctor.get("email"):
+        # ---------- emails (background, never block the booking) ----------
+        try:
+            if doctor.get("email"):
 
                 msg = Message(
                     subject="New Appointment Request - EMRS",
@@ -2183,26 +2405,25 @@ def book_appointment():
                 )
 
                 msg.body = f"""
-                Hello Dr. {doctor['full_name']},
+Hello Dr. {doctor['full_name']},
 
-                You have received a new appointment request.
+You have received a new appointment request.
 
-                Appointment ID : {appointment_id}
-                Patient ID : {patient_id}
-                Date : {appointment_date}
-                Time : {appointment_time}
-                Reason : {reason}
+Appointment ID : {appointment_id}
+Patient ID : {patient_id}
+Date : {appointment_date}
+Time : {appointment_time}
+Reason : {reason}
 
-                Please login to EMRS and review the appointment.
+Please login to EMRS and review the appointment.
 
-                Regards,
-                EMRS
-                """
+Regards,
+EMRS
+"""
 
-                # background send - never blocks/crashes the booking
                 send_mail_async(msg)
 
-            if patient and patient.get("email"):
+            if patient.get("email"):
 
                 msg = Message(
                     subject="Appointment Booked Successfully",
@@ -2211,39 +2432,42 @@ def book_appointment():
                 )
 
                 msg.body = f"""
-                Hello {patient['full_name']},
+Hello {patient['full_name']},
 
-                Your appointment has been booked successfully.
+Your appointment has been booked successfully.
 
-                Appointment ID : {appointment_id}
-                Date : {appointment_date}
-                Time : {appointment_time}
-                Status : Pending
+Appointment ID : {appointment_id}
+Date : {appointment_date}
+Time : {appointment_time}
+Status : Pending
 
-                Your doctor will review your appointment soon.
+Your doctor will review your appointment soon.
 
-                Thank you,
-                EMRS
-                """
+Thank you,
+EMRS
+"""
 
-                # background send - never blocks/crashes the booking
                 send_mail_async(msg)
 
-            else:
-                print("Patient not found or email missing.")
+        except Exception as e:
+            print("Mail Setup Error :", e)
 
-            return redirect(
-                url_for(
-                    "appointment_success",
-                    appointment_id=appointment_id
-                )
+        print(">>> SAVED OK, redirecting. appointment_id =", appointment_id)
+
+        return redirect(
+            url_for(
+                "appointment_success",
+                appointment_id=appointment_id
             )
+        )
 
     return render_template(
         "book_appointment.html",
         doctors=doctors,
         suggested_department=suggested_department,
-        hospital_name=hospital_name
+        hospital_name=hospital_name,
+        form_date=form_date,
+        form_reason=form_reason
     )
 
 # ================= AI Department Suggestion ================= #
@@ -2299,9 +2523,9 @@ def suggest_department(reason):
 
 
 # ============================================================
-# CUSTOM PATIENT ID GENERATOR
+# CUSTOM ID GENERATORS (patient / doctor / admin)
 # ============================================================
-# Builds an ID like "RAAP01" -> first 2 letters of the patient's name
+# Builds an ID like "RAAP01" -> first 2 letters of the name
 # + first 2 letters of the city + a running 2-digit number
 # for that exact prefix (so different name/city combos each start
 # their own count from 01).
@@ -2337,6 +2561,41 @@ def generate_patient_id(full_name, city):
     return new_id
 
 
+def generate_doctor_id(full_name, hospital_city):
+    """Same format as the patient ID (e.g. KAT001 style prefix + number),
+    built from the doctor's name + hospital city. Replaces the MySQL
+    trigger `before_doctor_insert`, which does not exist on the Aiven DB."""
+
+    name_part = (re.sub(r'[^A-Za-z]', '', full_name or "")[:2] or "XX").upper()
+    city_part = (re.sub(r'[^A-Za-z]', '', hospital_city or "")[:2] or "XX").upper()
+    prefix = name_part + city_part
+
+    n = 1
+    while True:
+        new_id = f"{prefix}{n:02d}"
+        cursor.execute("SELECT doctor_id FROM doctor WHERE doctor_id=%s", (new_id,))
+        if not cursor.fetchone():
+            return new_id
+        n += 1
+
+
+def generate_admin_id(full_name, city):
+    """Same format as the doctor/patient ID (e.g. RACH01), built from the
+    admin's name + city. Replaces the MySQL trigger `before_admin_insert`."""
+
+    name_part = (re.sub(r'[^A-Za-z]', '', full_name or "")[:2] or "XX").upper()
+    city_part = (re.sub(r'[^A-Za-z]', '', city or "")[:2] or "XX").upper()
+    prefix = name_part + city_part
+
+    n = 1
+    while True:
+        new_id = f"{prefix}{n:02d}"
+        cursor.execute("SELECT admin_id FROM admin WHERE admin_id=%s", (new_id,))
+        if not cursor.fetchone():
+            return new_id
+        n += 1
+
+
 # ================= Appointment Success ================= #
 
 @app.route("/appointment_success")
@@ -2345,7 +2604,18 @@ def appointment_success():
     if "patient_id" not in session:
         return redirect(url_for("patient_login"))
 
-    appointment_id = request.args.get("appointment_id")
+    appointment_id = request.args.get("appointment_id", type=int)
+
+    # If the id is missing, take the patient's latest appointment so
+    # the page never breaks.
+    if not appointment_id:
+        cursor.execute("""
+            SELECT MAX(appointment_id) AS last_id
+            FROM appointment
+            WHERE patient_id=%s
+        """, (session["patient_id"],))
+        row = cursor.fetchone()
+        appointment_id = row["last_id"] if row else None
 
     return render_template(
         "appointment_success.html",
@@ -2389,6 +2659,10 @@ from datetime import datetime
 
 @app.route("/download_slip/<int:appointment_id>")
 def download_slip(appointment_id):
+
+    # Only a logged-in patient or doctor can download a slip
+    if "patient_id" not in session and "doctor_id" not in session:
+        return redirect(url_for("login"))
 
     cursor.execute("""
         SELECT
@@ -2843,14 +3117,7 @@ def forgot_password(role):
 
         login_id = request.form["login_id"].strip()
 
-        global db, cursor
-
-        try:
-            if not db.is_connected():
-                db.reconnect(attempts=3, delay=2)
-                cursor = db.cursor(dictionary=True, buffered=True)
-        except Exception as e:
-            return f"Database Connection Error: {e}"
+        # (DB reconnect is now handled automatically per request by the pool)
 
         query = f"""
             SELECT full_name, email

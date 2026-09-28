@@ -2,7 +2,7 @@
 
 .main-content.full-width{
     width:100%;
-    max-width:1300px;
+    max-width:1140px;
     margin-left:auto;
     margin-right:auto;
 }
@@ -16,39 +16,46 @@
 }
 
 .back-btn{
-    display:flex;
+    display:inline-flex;
     align-items:center;
-    gap:8px;
-    background:#103B66;
-    color:#fff;
+    gap:9px;
+    background:#ffffff;
+    color:#003f7d;
     padding:10px 20px;
-    border-radius:12px;
+    border:1.5px solid #005eb8;
+    border-radius:6px;
     text-decoration:none;
-    font-size:14px;
+    font-family:'Public Sans','Segoe UI',Arial,sans-serif;
+    font-size:14.5px;
     font-weight:600;
-    box-shadow:0 8px 20px rgba(0,0,0,.25);
-    transition:.3s;
+    transition:background .15s;
 }
 
 .back-btn:hover{
-    background:#0EBEFF;
+    background:#e8f1fa;
+}
+
+.back-btn:focus-visible{
+    outline:3px solid #ffb81c;
+    outline-offset:2px;
 }
 
 /* ================= Medical Records - Search Box ================= */
 
 .md-search-box{
-    background:#103B66;
-    border-radius:20px;
-    padding:22px 30px;
-    margin-bottom:30px;
-    box-shadow:0 8px 20px rgba(0,0,0,.25);
+    background:#ffffff;
+    border:1px solid #d5dde5;
+    border-top:4px solid #005eb8;
+    border-radius:6px;
+    padding:20px 24px;
+    margin-bottom:26px;
 }
 
 .md-search-form{
     display:flex;
     flex-wrap:wrap;
     align-items:center;
-    gap:15px;
+    gap:12px;
 }
 
 .md-search-field{
@@ -57,15 +64,21 @@
     display:flex;
     align-items:center;
     gap:10px;
-    background:#0b2f52;
-    border:1px solid rgba(17,217,255,.25);
-    border-radius:12px;
-    padding:12px 16px;
+    background:#ffffff;
+    border:1.5px solid #8a99a8;
+    border-radius:6px;
+    padding:11px 14px;
+}
+
+.md-search-field:focus-within{
+    border-color:#005eb8;
+    outline:3px solid #ffb81c;
+    outline-offset:1px;
 }
 
 .md-search-field i{
-    color:#7DEBFF;
-    font-size:15px;
+    color:#586674;
+    font-size:14px;
 }
 
 .md-search-field input{
@@ -73,58 +86,85 @@
     background:transparent;
     border:none;
     outline:none;
-    color:#fff;
-    font-size:14px;
-    font-family:'Poppins',sans-serif;
+    color:#1b2733;
+    font-size:15px;
+    font-family:'Public Sans','Segoe UI',Arial,sans-serif;
 }
 
 .md-search-field input::placeholder{
-    color:#9db9d0;
+    color:#6b7a88;
 }
 
 .md-search-btn{
-    display:flex;
+    display:inline-flex;
     align-items:center;
     gap:8px;
-    background:#0EBEFF;
-    color:#fff;
+    background:#005eb8;
+    color:#ffffff;
     border:none;
     padding:12px 22px;
-    border-radius:12px;
-    font-size:14px;
+    border-radius:6px;
+    font-size:14.5px;
     font-weight:600;
-    font-family:'Poppins',sans-serif;
+    font-family:'Public Sans','Segoe UI',Arial,sans-serif;
+    box-shadow:0 2px 0 #003f7d;
     cursor:pointer;
-    transition:.3s;
+    transition:background .15s;
 }
 
 .md-search-btn:hover{
-    background:#11D9FF;
+    background:#003f7d;
+}
+
+.md-search-btn:focus-visible,
+.md-clear-btn:focus-visible{
+    outline:3px solid #ffb81c;
+    outline-offset:2px;
 }
 
 .md-clear-btn{
-    display:flex;
+    display:inline-flex;
     align-items:center;
     gap:8px;
-    background:transparent;
-    color:#d9f6ff;
-    border:1px solid rgba(255,255,255,.25);
-    padding:12px 20px;
-    border-radius:12px;
-    font-size:14px;
+    background:#ffffff;
+    color:#1b2733;
+    border:1.5px solid #d5dde5;
+    padding:11px 20px;
+    border-radius:6px;
+    font-size:14.5px;
+    font-weight:500;
+    font-family:'Public Sans','Segoe UI',Arial,sans-serif;
     text-decoration:none;
-    transition:.3s;
+    transition:background .15s;
 }
 
 .md-clear-btn:hover{
-    background:rgba(255,255,255,.08);
+    background:#e8f1fa;
 }
 
 @media(max-width:600px){
 
+    .back-bar{
+        justify-content:stretch;
+    }
+
+    .back-btn{
+        width:100%;
+        justify-content:center;
+    }
+
+    .md-search-box{
+        padding:16px;
+    }
+
     .md-search-form{
         flex-direction:column;
         align-items:stretch;
+    }
+
+    .md-search-btn,
+    .md-clear-btn{
+        justify-content:center;
     }
 
 }
