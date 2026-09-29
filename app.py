@@ -1265,7 +1265,11 @@ def admin_dashboard():
         total_medical_records=total_medical_records
     )
 
-# ================= ADMIN PATIENT PROFILE (VIEW ONLY) ================= #
+# ================= ADMIN PATIENT PROFILE (VIEW + EDIT) ================= #
+# This page also handles action="update" so the admin can edit the
+# patient's details inline (Edit Profile button on the page).
+# FIX: every form field is now read with .get() so a missing field can
+# never crash the route with BadRequestKeyError again.
 @app.route("/admin_patient", methods=["GET", "POST"])
 def admin_patient():
 
@@ -1276,18 +1280,100 @@ def admin_patient():
     medical_records = []
     prescriptions = []
     lab_reports_list = []
+    edit_open = False   # True -> page re-opens with the edit form visible
 
     if request.method == "POST":
 
-        patient_id = request.form["patient_id"].strip()
-        patient_name = request.form["patient_name"].strip()
+        action = request.form.get("action", "search")
+        patient_id = request.form.get("patient_id", "").strip()
 
-        cursor.execute("""
-            SELECT * FROM patient
-            WHERE patient_id=%s AND full_name=%s
-        """, (patient_id, patient_name))
+        if action == "update":
 
-        patient = cursor.fetchone()
+            full_name = request.form.get("full_name", "").strip()
+            email = request.form.get("email", "").strip()
+            mobile = request.form.get("mobile", "").strip()
+            dob = request.form.get("dob", "").strip() or None
+            gender = request.form.get("gender", "").strip()
+            blood_group = request.form.get("blood_group", "").strip()
+
+            address = request.form.get("address", "").strip()
+            city = request.form.get("city", "").strip()
+            district = request.form.get("district", "").strip()
+            state = request.form.get("state", "").strip()
+            pincode = request.form.get("pincode", "").strip()
+
+            emergency_name = request.form.get("emergency_name", "").strip()
+            emergency_phone = request.form.get("emergency_phone", "").strip()
+
+            if not full_name or not email or not mobile:
+                flash("Name, email and mobile are required.", "danger")
+                edit_open = True
+
+            else:
+                # email must stay unique across the OTHER patients
+                cursor.execute("""
+                    SELECT patient_id FROM patient
+                    WHERE email=%s AND patient_id!=%s
+                """, (email, patient_id))
+
+                if cursor.fetchone():
+                    flash("This email is already used by another patient.", "danger")
+                    edit_open = True
+                else:
+                    cursor.execute("""
+                        UPDATE patient
+                        SET
+                            full_name=%s,
+                            email=%s,
+                            mobile=%s,
+                            dob=%s,
+                            gender=%s,
+                            blood_group=%s,
+                            address=%s,
+                            city=%s,
+                            district=%s,
+                            state=%s,
+                            pincode=%s,
+                            emergency_name=%s,
+                            emergency_phone=%s
+                        WHERE patient_id=%s
+                    """, (
+                        full_name,
+                        email,
+                        mobile,
+                        dob,
+                        gender,
+                        blood_group,
+                        address,
+                        city,
+                        district,
+                        state,
+                        pincode,
+                        emergency_name,
+                        emergency_phone,
+                        patient_id
+                    ))
+                    db.commit()
+
+                    flash("Patient Details Updated Successfully!", "success")
+
+            # reload the patient (by ID only - the name may have just changed)
+            cursor.execute(
+                "SELECT * FROM patient WHERE patient_id=%s",
+                (patient_id,)
+            )
+            patient = cursor.fetchone()
+
+        else:
+
+            patient_name = request.form.get("patient_name", "").strip()
+
+            cursor.execute("""
+                SELECT * FROM patient
+                WHERE patient_id=%s AND full_name=%s
+            """, (patient_id, patient_name))
+
+            patient = cursor.fetchone()
 
         if not patient:
             flash("Patient Not Found!", "danger")
@@ -1327,10 +1413,13 @@ def admin_patient():
         patient=patient,
         medical_records=medical_records,
         prescriptions=prescriptions,
-        lab_reports=lab_reports_list
+        lab_reports=lab_reports_list,
+        edit_open=edit_open
     )
 
 # ================= ADMIN EDIT PATIENT PROFILE ================= #
+# (Older separate-page version. The inline Edit Profile button on
+#  /admin_patient does the same job now, so this route is optional.)
 # patient_id is a text ID like "RAAP01", so this must NOT use <int:...>
 @app.route("/admin_edit_patient/<patient_id>", methods=["GET", "POST"])
 def admin_edit_patient(patient_id):

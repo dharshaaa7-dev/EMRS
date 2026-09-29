@@ -6,6 +6,52 @@
 <title>EMRS - Patient Profile</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_patient.css') }}">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<!-- Styles for the new edit feature only (existing CSS is untouched) -->
+<style>
+  .card-head{
+    display:flex; justify-content:space-between; align-items:center;
+    gap:12px; flex-wrap:wrap; margin-bottom:16px;
+  }
+  .card-head .section-title{ margin-bottom:0; }
+
+  .btn-edit{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:9px 18px; border-radius:8px; cursor:pointer;
+    background:#fff; color:#0b5c8a; border:1px solid #0b5c8a;
+    font-size:14px; font-weight:600; transition:background .2s, color .2s;
+  }
+  .btn-edit:hover{ background:#0b5c8a; color:#fff; }
+
+  .btn-secondary{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 22px; border-radius:8px; cursor:pointer;
+    background:#fff; color:#3d4f61; border:1px solid #b7c7d4;
+    font-size:15px; font-weight:600;
+  }
+  .btn-secondary:hover{ background:#eef3f7; }
+
+  .edit-hidden{ display:none; }
+
+  .edit-form .field select,
+  .edit-form .field textarea{
+    width:100%; padding:11px 14px; font-size:15px;
+    border:1px solid #b7c7d4; border-radius:8px; background:#fff; outline:none;
+  }
+  .edit-form .field input[readonly]{
+    background:#eef3f7; color:#6a7b8b; cursor:not-allowed;
+  }
+  .edit-form .field select:focus,
+  .edit-form .field textarea:focus{
+    border-color:#0b5c8a; box-shadow:0 0 0 3px rgba(11,92,138,.15);
+  }
+  .edit-form .sub-title{
+    margin:22px 0 12px; font-size:15px; font-weight:600; color:#12263a;
+    padding-bottom:8px; border-bottom:1px solid #d8e2ea;
+  }
+  .edit-form .hint{ font-size:12.5px; color:#6a7b8b; }
+  .edit-form .actions{ justify-content:flex-end; gap:12px; margin-top:22px; }
+</style>
 </head>
 <body>
 
@@ -19,7 +65,7 @@
         <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
       </a>
       <h2><i class="fa-solid fa-user-injured"></i> Patient Profile</h2>
-      <p>Search a patient to view their full details, medical records, prescriptions and lab reports</p>
+      <p>Search a patient to view or edit their details, and see medical records, prescriptions and lab reports</p>
     </header>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -36,13 +82,13 @@
       <div class="grid">
         <div class="field">
           <label for="patient_id">Patient ID</label>
-          <input type="text" id="patient_id" name="patient_id" placeholder="e.g. 12" required
+          <input type="text" id="patient_id" name="patient_id" placeholder="e.g. RAAP01" required
                  value="{{ request.form.get('patient_id', '') }}">
         </div>
         <div class="field">
           <label for="patient_name">Patient Name (exact full name)</label>
           <input type="text" id="patient_name" name="patient_name" placeholder="Enter patient full name" required
-                 value="{{ request.form.get('patient_name', '') }}">
+                 value="{{ request.form.get('patient_name', patient.full_name if patient else '') }}">
         </div>
       </div>
       <div class="actions" style="justify-content:flex-start; margin-top:16px;">
@@ -52,23 +98,124 @@
 
     {% if patient %}
 
-    <!-- ===== PATIENT DETAILS ===== -->
+    <!-- ===== PATIENT DETAILS (view + edit) ===== -->
     <div class="report-card">
-      <div class="section-title">Patient Details</div>
-      <div class="details-grid">
-        <div class="detail"><span>Full Name</span><strong>{{ patient.full_name }}</strong></div>
-        <div class="detail"><span>Patient ID</span><strong>{{ patient.patient_id }}</strong></div>
-        <div class="detail"><span>Email</span><strong>{{ patient.email }}</strong></div>
-        <div class="detail"><span>Mobile</span><strong>{{ patient.mobile }}</strong></div>
-        <div class="detail"><span>DOB</span><strong>{{ patient.dob }}</strong></div>
-        <div class="detail"><span>Gender</span><strong>{{ patient.gender }}</strong></div>
-        <div class="detail"><span>Blood Group</span><strong>{{ patient.blood_group }}</strong></div>
-        <div class="detail"><span>Hospital</span><strong>{{ patient.hospital_name }}</strong></div>
-        <div class="detail"><span>Address</span>
-          <strong>{{ patient.house_no }}, {{ patient.street }}, {{ patient.city }}, {{ patient.district }}, {{ patient.state }} - {{ patient.pincode }}</strong>
-        </div>
-        <div class="detail"><span>Emergency Contact</span><strong>{{ patient.emergency_name }} ({{ patient.emergency_phone }})</strong></div>
+      <div class="card-head">
+        <div class="section-title">Patient Details</div>
+        <button type="button" class="btn-edit" id="editBtn" onclick="toggleEdit(true)">
+          <i class="fa-solid fa-pen-to-square"></i> Edit Profile
+        </button>
       </div>
+
+      <!-- View mode -->
+      <div id="viewMode">
+        <div class="details-grid">
+          <div class="detail"><span>Full Name</span><strong>{{ patient.full_name }}</strong></div>
+          <div class="detail"><span>Patient ID</span><strong>{{ patient.patient_id }}</strong></div>
+          <div class="detail"><span>Email</span><strong>{{ patient.email }}</strong></div>
+          <div class="detail"><span>Mobile</span><strong>{{ patient.mobile }}</strong></div>
+          <div class="detail"><span>DOB</span><strong>{{ patient.dob }}</strong></div>
+          <div class="detail"><span>Gender</span><strong>{{ patient.gender }}</strong></div>
+          <div class="detail"><span>Blood Group</span><strong>{{ patient.blood_group }}</strong></div>
+          <div class="detail"><span>Address</span>
+            <strong>{{ patient.address }}, {{ patient.city }}, {{ patient.district }}, {{ patient.state }} - {{ patient.pincode }}</strong>
+          </div>
+          <div class="detail"><span>Emergency Contact</span><strong>{{ patient.emergency_name }} ({{ patient.emergency_phone }})</strong></div>
+        </div>
+      </div>
+
+      <!-- Edit mode -->
+      <form method="POST" id="editMode" class="edit-form edit-hidden">
+        <input type="hidden" name="action" value="update">
+
+        <div class="grid">
+          <div class="field">
+            <label for="e_full_name">Full Name</label>
+            <input type="text" id="e_full_name" name="full_name" value="{{ patient.full_name }}" required>
+          </div>
+          <div class="field">
+            <label for="e_patient_id">Patient ID</label>
+            <input type="text" id="e_patient_id" name="patient_id" value="{{ patient.patient_id }}" readonly>
+            <span class="hint">Unique ID. It cannot be changed.</span>
+          </div>
+          <div class="field">
+            <label for="e_email">Email</label>
+            <input type="email" id="e_email" name="email" value="{{ patient.email or '' }}" required>
+          </div>
+          <div class="field">
+            <label for="e_mobile">Mobile</label>
+            <input type="tel" id="e_mobile" name="mobile" value="{{ patient.mobile or '' }}"
+                   pattern="[0-9]{10}" maxlength="10" required>
+            <span class="hint">10 digits</span>
+          </div>
+          <div class="field">
+            <label for="e_dob">DOB</label>
+            <input type="date" id="e_dob" name="dob" value="{{ patient.dob }}" required>
+          </div>
+          <div class="field">
+            <label for="e_gender">Gender</label>
+            <select id="e_gender" name="gender" required>
+              {% for g in ['Male', 'Female', 'Other'] %}
+              <option value="{{ g }}" {% if patient.gender == g %}selected{% endif %}>{{ g }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label for="e_blood_group">Blood Group</label>
+            <select id="e_blood_group" name="blood_group">
+              <option value="">Select</option>
+              {% for b in ['A+','A-','B+','B-','AB+','AB-','O+','O-'] %}
+              <option value="{{ b }}" {% if patient.blood_group == b %}selected{% endif %}>{{ b }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="sub-title">Address</div>
+        <div class="grid">
+          <div class="field">
+            <label for="e_address">Address</label>
+            <input type="text" id="e_address" name="address" value="{{ patient.address or '' }}">
+          </div>
+          <div class="field">
+            <label for="e_city">City</label>
+            <input type="text" id="e_city" name="city" value="{{ patient.city or '' }}">
+          </div>
+          <div class="field">
+            <label for="e_district">District</label>
+            <input type="text" id="e_district" name="district" value="{{ patient.district or '' }}">
+          </div>
+          <div class="field">
+            <label for="e_state">State</label>
+            <input type="text" id="e_state" name="state" value="{{ patient.state or '' }}">
+          </div>
+          <div class="field">
+            <label for="e_pincode">Pincode</label>
+            <input type="text" id="e_pincode" name="pincode" value="{{ patient.pincode or '' }}"
+                   pattern="[0-9]{6}" maxlength="6">
+          </div>
+        </div>
+
+        <div class="sub-title">Emergency Contact</div>
+        <div class="grid">
+          <div class="field">
+            <label for="e_emergency_name">Contact Name</label>
+            <input type="text" id="e_emergency_name" name="emergency_name" value="{{ patient.emergency_name or '' }}">
+          </div>
+          <div class="field">
+            <label for="e_emergency_phone">Contact Phone</label>
+            <input type="tel" id="e_emergency_phone" name="emergency_phone" value="{{ patient.emergency_phone or '' }}"
+                   pattern="[0-9]{10}" maxlength="10">
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn-secondary" onclick="toggleEdit(false)">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-floppy-disk"></i> Save Changes
+          </button>
+        </div>
+      </form>
     </div>
 
     <!-- ===== MEDICAL RECORDS ===== -->
@@ -146,7 +293,12 @@
               <td>{{ lr.visit_date }}</td>
               <td>{{ lr.clinic_name }}</td>
               <td>
-                <a href="{{ url_for('static', filename=lr.report_pdf) }}" target="_blank">
+                {# Reports are now stored on Cloudinary (full https URL). Old rows may still hold a local static path. #}
+                {% if lr.report_pdf and lr.report_pdf.startswith('http') %}
+                  <a href="{{ lr.report_pdf }}" target="_blank">
+                {% else %}
+                  <a href="{{ url_for('static', filename=lr.report_pdf) }}" target="_blank">
+                {% endif %}
                   <i class="fa-solid fa-file-pdf"></i> View PDF
                 </a>
               </td>
@@ -163,5 +315,18 @@
 
   </main>
 </div>
+
+<script>
+  function toggleEdit(show){
+    var view = document.getElementById('viewMode');
+    var edit = document.getElementById('editMode');
+    var btn  = document.getElementById('editBtn');
+    if(!view || !edit) return;
+    view.classList.toggle('edit-hidden', show);
+    edit.classList.toggle('edit-hidden', !show);
+    btn.style.display = show ? 'none' : 'inline-flex';
+    if(show){ document.getElementById('e_full_name').focus(); }
+  }
+</script>
 </body>
 </html>
