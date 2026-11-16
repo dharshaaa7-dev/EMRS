@@ -6,6 +6,7 @@ import re
 import os
 import threading
 import traceback
+import requests
 
 from dotenv import load_dotenv
 load_dotenv(r"D:\EMRS\.env")   # <-- loads DB_HOST, DB_PORT, MAIL_USERNAME etc. from the .env file
@@ -3196,6 +3197,75 @@ def logout():
 
 # ================= FORGOT PASSWORD ================= #
 
+
+# ================= SENDGRID EMAIL FUNCTION ================= #
+
+def send_otp_email(to_email, full_name, otp):
+
+    api_key = os.environ.get("SENDGRID_API_KEY")
+
+    if not api_key:
+        return False, "SendGrid API key is missing."
+
+    sender_email = "dharshaaa7@gmail.com"  # Verified SendGrid sender
+
+    url = "https://api.sendgrid.com/v3/mail/send"
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "personalizations": [
+            {
+                "to": [{"email": to_email}],
+                "subject": "EMRS Password Reset OTP"
+            }
+        ],
+        "from": {
+            "email": sender_email,
+            "name": "EMRS"
+        },
+        "content": [
+            {
+                "type": "text/plain",
+                "value": f"""
+Hello {full_name},
+
+Your EMRS Password Reset OTP is: {otp}
+
+Do not share this OTP with anyone.
+
+Regards,
+EMRS Team
+"""
+            }
+        ]
+    }
+
+    try:
+        response = requests.post(
+            url,
+            headers=headers,
+            json=data,
+            timeout=15
+        )
+
+        if response.status_code == 202:
+            return True, None
+
+        return False, f"SendGrid Error: HTTP {response.status_code}"
+
+    except requests.exceptions.Timeout:
+        return False, "Email sending timed out. Please try again."
+
+    except requests.exceptions.RequestException:
+        return False, "Unable to connect to SendGrid. Please try again."
+
+
+# ================= FORGOT PASSWORD ================= #
+
 @app.route("/forgot_password/<role>", methods=["GET", "POST"])
 def forgot_password(role):
 
@@ -3204,9 +3274,10 @@ def forgot_password(role):
 
     if request.method == "POST":
 
-        login_id = request.form["login_id"].strip()
+        login_id = request.form.get("login_id", "").strip()
 
-        # (DB reconnect is now handled automatically per request by the pool)
+        if not login_id:
+            return "Please enter your Email or Mobile number."
 
         query = f"""
             SELECT full_name, email
@@ -3217,48 +3288,39 @@ def forgot_password(role):
         try:
             cursor.execute(query, (login_id, login_id))
             user = cursor.fetchone()
-        except Exception as e:
-            return f"Database Query Error: {e}"
+
+        except Exception:
+            return "Database Query Error. Please try again."
 
         if not user:
-            return "\u274c Email or Mobile not found."
+            return "Email or Mobile not found."
+
+        if not user.get("email"):
+            return "Email address is not available for this account."
 
         otp = str(random.randint(100000, 999999))
+
+        ok, err = send_otp_email(
+            user["email"],
+            user["full_name"],
+            otp
+        )
+
+        if not ok:
+            return f"Mail Error: {err}"
 
         session["otp"] = otp
         session["login_id"] = login_id
         session["table"] = role
-
-        msg = Message(
-            subject="EMRS Password Reset OTP",
-            sender=app.config["MAIL_USERNAME"],
-            recipients=[user["email"]]
-        )
-
-        msg.body = f"""
-Hello {user['full_name']},
-
-Your OTP is: {otp}
-
-Do not share this OTP with anyone.
-
-Regards,
-EMRS Team
-"""
-
-        # OTP mail: wait up to 12 seconds (well below gunicorn's 30s worker
-        # timeout) so a blocked SMTP port shows a message instead of a 500.
-        ok, err = send_mail_with_timeout(msg, timeout=12)
-
-        if not ok:
-            session.pop("otp", None)
-            return f"Mail Error: {err}"
+        session.pop("otp_verified", None)
 
         return redirect(url_for("verify_otp"))
 
     return render_template("forgot_password.html", role=role)
 
+
 # ================= VERIFY OTP ================= #
+
 @app.route("/verify_otp", methods=["GET", "POST"])
 def verify_otp():
 
@@ -3269,88 +3331,102 @@ def verify_otp():
 
     if request.method == "POST":
 
-        entered_otp = request.form["otp"].strip()
+        entered_otp = request.form.get("otp", "").strip()
 
-        if entered_otp == session["otp"]:
+        if entered_otp == session.get("otp"):
+
             session["otp_verified"] = True
+
             return redirect(url_for("reset_password"))
+
         else:
             return render_template(
-            "verify_otp.html",
-            role=role,
-            error="Invalid OTP! Please enter the correct OTP."
-    )
+                "verify_otp.html",
+                role=role,
+                error="Invalid OTP! Please enter the correct OTP."
+            )
 
     return render_template("verify_otp.html", role=role)
+
 
 # ================= RESET PASSWORD ================= #
 
 @app.route("/reset_password", methods=["GET", "POST"])
 def reset_password():
 
-    if "otp_verified" not in session:
+    if not session.get("otp_verified"):
         return redirect(url_for("login"))
 
     if request.method == "POST":
 
-        password = request.form["password"]
-        confirm_password = request.form["confirm_password"]
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
 
         if password != confirm_password:
             return render_template(
                 "reset_password.html",
-                error="\u274c Passwords do not match."
+                error="Passwords do not match."
             )
 
-        login_id = session["login_id"]
-        table = session["table"]
+        login_id = session.get("login_id")
+        table = session.get("table")
 
-        cursor.execute(f"""
-            SELECT password
-            FROM {table}
-            WHERE email=%s OR mobile=%s
-        """, (login_id, login_id))
+        if table not in ["patient", "doctor", "admin"]:
+            return redirect(url_for("login"))
 
-        user = cursor.fetchone()
+        try:
+            cursor.execute(
+                f"""
+                SELECT password
+                FROM {table}
+                WHERE email=%s OR mobile=%s
+                """,
+                (login_id, login_id)
+            )
+
+            user = cursor.fetchone()
+
+        except Exception:
+            return "Database Query Error. Please try again."
 
         if user and password == user["password"]:
             return render_template(
                 "reset_password.html",
-                error="\u274c You cannot reuse your old password."
+                error="You cannot reuse your old password."
             )
 
-        pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$'
+        pattern = (
+            r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)'
+            r'(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$'
+        )
 
         if not re.match(pattern, password):
             return render_template(
                 "reset_password.html",
-                error="\u274c Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number and one special character."
+                error=(
+                    "Password must contain at least 8 characters, "
+                    "one uppercase letter, one lowercase letter, "
+                    "one number and one special character."
+                )
             )
 
-        if table == "patient":
-            cursor.execute("""
-                UPDATE patient
+        try:
+            cursor.execute(
+                f"""
+                UPDATE {table}
                 SET password=%s
                 WHERE email=%s OR mobile=%s
-            """, (password, login_id, login_id))
+                """,
+                (password, login_id, login_id)
+            )
 
-        elif table == "doctor":
-            cursor.execute("""
-                UPDATE doctor
-                SET password=%s
-                WHERE email=%s OR mobile=%s
-            """, (password, login_id, login_id))
+            db.commit()
 
-        elif table == "admin":
-            cursor.execute("""
-                UPDATE admin
-                SET password=%s
-                WHERE email=%s OR mobile=%s
-            """, (password, login_id, login_id))
+        except Exception:
+            db.rollback()
+            return "Password update failed. Please try again."
 
-        db.commit()
-
-        role = session["table"]
+        role = table
 
         session.pop("otp", None)
         session.pop("otp_verified", None)
@@ -3363,8 +3439,6 @@ def reset_password():
         )
 
     return render_template("reset_password.html")
-
-
 # ================= ERROR HANDLER ================= #
 
 @app.errorhandler(404)
@@ -3374,4 +3448,5 @@ def page_not_found(error):
 
 # ================= RUN APP ================= #
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True) 
+    
