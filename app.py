@@ -16,6 +16,7 @@ import io
 from flask_mail import Mail, Message
 from werkzeug.utils import secure_filename
 from deep_translator import GoogleTranslator   # <-- AI FEATURE: Tamil -> English translation
+from jinja2 import TemplateNotFound            # <-- NEW: used by the edit-profile fallback
 
 import cloudinary
 import cloudinary.uploader
@@ -2999,8 +3000,16 @@ def download_slip(appointment_id):
         mimetype="application/pdf"
     )
 
-# ================= EDIT PATIENT PROFILE ================= #
-
+# ================= EDIT PATIENT PROFILE (FIXED) ================= #
+# FIX: this route used to crash with "Internal Server Error" when you
+# clicked "Edit Patient". Causes handled now:
+#   1. every form field is read with .get() (no BadRequestKeyError)
+#   2. an empty DOB is saved as NULL instead of "" (MySQL rejects "")
+#   3. if edit_patient_profile.html is missing on the server (Linux /
+#      Render is CASE-SENSITIVE, unlike Windows) we fall back to the
+#      working patient_settings.html page instead of crashing
+#   4. any other error is printed with the full traceback in the Render
+#      logs and the user is sent back to the dashboard with a message
 @app.route("/edit_patient_profile", methods=["GET", "POST"])
 def edit_patient_profile():
 
@@ -3009,76 +3018,112 @@ def edit_patient_profile():
 
     patient_id = session["patient_id"]
 
-    if request.method == "POST":
+    try:
 
-        full_name = request.form["full_name"]
-        email = request.form["email"]
-        mobile = request.form["mobile"]
-        dob = request.form["dob"]
-        gender = request.form["gender"]
-        blood_group = request.form["blood_group"]
+        if request.method == "POST":
 
-        address = request.form["address"]
-        city = request.form["city"]
-        district = request.form["district"]
-        state = request.form["state"]
-        pincode = request.form["pincode"]
+            f = request.form
 
-        emergency_name = request.form["emergency_name"]
-        emergency_phone = request.form["emergency_phone"]
+            full_name = f.get("full_name", "").strip()
+            email = f.get("email", "").strip()
+            mobile = f.get("mobile", "").strip()
+            dob = f.get("dob", "").strip() or None
+            gender = f.get("gender", "").strip()
+            blood_group = f.get("blood_group", "").strip()
 
-        sql = """
-        UPDATE patient
-        SET
-            full_name=%s,
-            email=%s,
-            mobile=%s,
-            dob=%s,
-            gender=%s,
-            blood_group=%s,
-            address=%s,
-            city=%s,
-            district=%s,
-            state=%s,
-            pincode=%s,
-            emergency_name=%s,
-            emergency_phone=%s
-        WHERE patient_id=%s
-        """
+            address = f.get("address", "").strip()
+            city = f.get("city", "").strip()
+            district = f.get("district", "").strip()
+            state = f.get("state", "").strip()
+            pincode = f.get("pincode", "").strip()
 
-        values = (
-            full_name,
-            email,
-            mobile,
-            dob,
-            gender,
-            blood_group,
-            address,
-            city,
-            district,
-            state,
-            pincode,
-            emergency_name,
-            emergency_phone,
-            patient_id
+            emergency_name = f.get("emergency_name", "").strip()
+            emergency_phone = f.get("emergency_phone", "").strip()
+
+            if not full_name or not email or not mobile:
+                flash("Name, email and mobile are required.", "danger")
+                return redirect(url_for("edit_patient_profile"))
+
+            # email must stay unique across the OTHER patients
+            cursor.execute("""
+                SELECT patient_id FROM patient
+                WHERE email=%s AND patient_id!=%s
+            """, (email, patient_id))
+
+            if cursor.fetchone():
+                flash("This email is already used by another patient.", "danger")
+                return redirect(url_for("edit_patient_profile"))
+
+            cursor.execute("""
+                UPDATE patient
+                SET
+                    full_name=%s,
+                    email=%s,
+                    mobile=%s,
+                    dob=%s,
+                    gender=%s,
+                    blood_group=%s,
+                    address=%s,
+                    city=%s,
+                    district=%s,
+                    state=%s,
+                    pincode=%s,
+                    emergency_name=%s,
+                    emergency_phone=%s
+                WHERE patient_id=%s
+            """, (
+                full_name,
+                email,
+                mobile,
+                dob,
+                gender,
+                blood_group,
+                address,
+                city,
+                district,
+                state,
+                pincode,
+                emergency_name,
+                emergency_phone,
+                patient_id
+            ))
+
+            db.commit()
+
+            flash("Profile Updated Successfully!", "success")
+
+            return redirect(url_for("patient_dashboard"))
+
+        # ---------- GET: open the edit page ----------
+        cursor.execute(
+            "SELECT * FROM patient WHERE patient_id=%s",
+            (patient_id,)
         )
 
-        cursor.execute(sql, values)
-        db.commit()
+        patient_data = cursor.fetchone()
 
+        if patient_data is None:
+            session.clear()
+            return redirect(url_for("patient_login"))
+
+        try:
+            return render_template(
+                "edit_patient_profile.html",
+                patient=patient_data
+            )
+        except TemplateNotFound:
+            print("!!! edit_patient_profile.html NOT FOUND on server "
+                  "(check file name / upper-lower case). Using patient_settings.html")
+            return render_template(
+                "patient_settings.html",
+                patient=patient_data
+            )
+
+    except Exception as e:
+        print("Edit Patient Profile Error :", e)
+        traceback.print_exc()
+        flash("Could not open / save the profile: " + str(e), "danger")
         return redirect(url_for("patient_dashboard"))
-
-    cursor.execute(
-        "SELECT * FROM patient WHERE patient_id=%s",
-        (patient_id,)
-    )
-
-    patient_data = cursor.fetchone()
-
-    return render_template(
-        "edit_patient_profile.html",
-        patient=patient_data
-    )
 
 
 # ================= PATIENT SETTINGS (VIEW / EDIT PROFILE + PROFILE PICTURE) ================= #
@@ -3096,7 +3141,7 @@ def patient_settings():
         full_name = request.form["full_name"]
         email = request.form["email"]
         mobile = request.form["mobile"]
-        dob = request.form["dob"]
+        dob = request.form.get("dob", "").strip() or None
         gender = request.form["gender"]
         blood_group = request.form["blood_group"]
 
@@ -3120,13 +3165,22 @@ def patient_settings():
 
         if file and file.filename != "":
             if allowed_image(file.filename):
-                filename = secure_filename(f"patient_{patient_id}_{file.filename}")
-                file_path = os.path.join(PROFILE_UPLOAD_FOLDER, filename)
-                file.save(file_path)
-                profile_image = url_for(
-                    "static",
-                    filename=f"uploads/profile_pictures/{filename}"
-                )
+                # FIX: the photo is now uploaded to Cloudinary. Saving it on
+                # Render's local disk meant it vanished on every restart,
+                # which is why the profile picture showed as a broken image.
+                try:
+                    upload_result = cloudinary.uploader.upload(
+                        file,
+                        resource_type="image",
+                        folder="profile_pictures",
+                        public_id=secure_filename(f"patient_{patient_id}"),
+                        overwrite=True
+                    )
+                    profile_image = upload_result["secure_url"]
+                except Exception as e:
+                    print("Profile Image Upload Error :", e)
+                    traceback.print_exc()
+                    flash("Could not upload the profile picture. Please try again.", "danger")
             else:
                 flash("Only PNG / JPG / JPEG images are allowed for the profile picture.", "danger")
 
@@ -3439,14 +3493,28 @@ def reset_password():
         )
 
     return render_template("reset_password.html")
-# ================= ERROR HANDLER ================= #
+# ================= ERROR HANDLERS ================= #
 
 @app.errorhandler(404)
 def page_not_found(error):
     return "<h2>404 - Page Not Found</h2>", 404
 
 
+# NEW: any unhandled crash now prints the FULL traceback in the Render
+# logs (Logs tab), so you can see the exact line / file that failed
+# instead of only the generic "Internal Server Error" page.
+@app.errorhandler(500)
+def internal_error(error):
+    original = getattr(error, "original_exception", None) or error
+    print("!!! 500 ERROR on", request.method, request.path)
+    traceback.print_exception(type(original), original, original.__traceback__)
+    return (
+        "<h2>500 - Something went wrong</h2>"
+        "<p>The error has been logged. Please go back and try again.</p>",
+        500
+    )
+
+
 # ================= RUN APP ================= #
 if __name__ == "__main__":
-    app.run(debug=True) 
-    
+    app.run(debug=True)
