@@ -202,24 +202,82 @@ def allowed_image(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
 
 
-def upload_profile_image_to_cloudinary(file, public_id):
-    """Uploads a profile picture to Cloudinary and returns its https URL.
-    (Local disk on Render is wiped on every restart, which is why the
-    profile photo used to turn into a broken image icon.)
-    Returns (url, error_message)."""
-    try:
-        result = cloudinary.uploader.upload(
-            file,
-            resource_type="image",
-            folder="profile_pictures",
-            public_id=public_id,
-            overwrite=True
+# ================= PATIENT PHOTO STORED IN THE DATABASE ================= #
+# The photo bytes are saved in a small separate table (patient_photo), so
+# nothing is lost when Render restarts and no Cloudinary key is needed.
+# The table is created automatically the first time it is used.
+
+MAX_PHOTO_BYTES = 2 * 1024 * 1024   # 2 MB
+
+
+def ensure_photo_table():
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS patient_photo (
+            patient_id VARCHAR(50) PRIMARY KEY,
+            image_data LONGBLOB,
+            mime_type VARCHAR(50),
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                ON UPDATE CURRENT_TIMESTAMP
         )
-        return result["secure_url"], None
+    """)
+
+
+def save_patient_photo(patient_id, file):
+    """Saves the uploaded photo in the database.
+    Returns (url_to_show_the_photo, error_message)."""
+    try:
+        data = file.read()
+
+        if not data:
+            return None, "The selected file is empty."
+
+        if len(data) > MAX_PHOTO_BYTES:
+            return None, "Photo is too big. Please choose an image under 2 MB."
+
+        ext = file.filename.rsplit(".", 1)[1].lower()
+        mime = "image/png" if ext == "png" else "image/jpeg"
+
+        ensure_photo_table()
+
+        cursor.execute("""
+            REPLACE INTO patient_photo (patient_id, image_data, mime_type)
+            VALUES (%s, %s, %s)
+        """, (patient_id, data, mime))
+        db.commit()
+
+        version = int(datetime.now().timestamp())   # busts the browser cache
+        return f"/patient_photo/{patient_id}?v={version}", None
+
     except Exception as e:
-        print("Profile image upload error :", e)
+        print("Profile image save error :", e)
         traceback.print_exc()
         return None, str(e)
+
+
+@app.route("/patient_photo/<patient_id>")
+def patient_photo(patient_id):
+
+    if "patient_id" not in session and "doctor_id" not in session and "admin_id" not in session:
+        return "", 403
+
+    try:
+        ensure_photo_table()
+        cursor.execute(
+            "SELECT image_data, mime_type FROM patient_photo WHERE patient_id=%s",
+            (patient_id,)
+        )
+        row = cursor.fetchone()
+    except Exception as e:
+        print("Photo read error :", e)
+        return "", 404
+
+    if not row or not row["image_data"]:
+        return "", 404
+
+    return send_file(
+        io.BytesIO(row["image_data"]),
+        mimetype=row["mime_type"] or "image/jpeg"
+    )
 
 
 # ================= HOME PAGE ================= #
@@ -2944,7 +3002,8 @@ def download_slip(appointment_id):
 #    threw 400. FIX: every field is read with .get(), and the address is
 #    built from address OR house_no + street.
 # 3. Profile photo showed a broken image after some time, because it was
-#    saved on Render's temporary disk. FIX: photo is uploaded to Cloudinary.
+#    saved on Render's temporary disk. FIX: photo is saved in the database
+#    (table patient_photo) and shown through /patient_photo/<id>.
 
 def build_address(form):
     """Returns the address from either a single 'address' box or from
@@ -3055,10 +3114,7 @@ def patient_settings():
 
             if file and file.filename != "":
                 if allowed_image(file.filename):
-                    new_url, err = upload_profile_image_to_cloudinary(
-                        file,
-                        secure_filename(f"patient_{patient_id}")
-                    )
+                    new_url, err = save_patient_photo(patient_id, file)
                     if new_url:
                         profile_image = new_url
                     else:
