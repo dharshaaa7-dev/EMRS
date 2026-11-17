@@ -16,7 +16,6 @@ import io
 from flask_mail import Mail, Message
 from werkzeug.utils import secure_filename
 from deep_translator import GoogleTranslator   # <-- AI FEATURE: Tamil -> English translation
-from jinja2 import TemplateNotFound            # <-- NEW: used by the edit-profile fallback
 
 import cloudinary
 import cloudinary.uploader
@@ -33,10 +32,9 @@ print("That file exists? :", os.path.isfile(os.path.join(app.static_folder, "css
 print("=" * 60)
 
 # ================= CLOUDINARY CONFIGURATION ================= #
-# Lab report PDFs are stored on Cloudinary instead of local disk because
-# Render's free-tier filesystem is ephemeral - files saved to disk
-# disappear on every restart/redeploy, which is why "View PDF" was
-# throwing 404 after a while even though the DB row still existed.
+# Lab report PDFs and patient profile pictures are stored on Cloudinary
+# because Render's free-tier filesystem is ephemeral (files saved to disk
+# disappear on every restart/redeploy).
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
     api_key=os.getenv("CLOUDINARY_API_KEY"),
@@ -61,12 +59,6 @@ mail = Mail(app)
 
 
 # ================= SAFE MAIL SENDING ================= #
-# Render's free web services block outbound SMTP ports (25/465/587), so a
-# plain mail.send() can hang until gunicorn kills the worker -> the user
-# sees "Internal Server Error" even though the DB work already succeeded.
-# These helpers run the SMTP call in a background thread so a slow or
-# blocked mail server can never freeze / crash a request.
-
 def send_mail_async(msg):
     """Fire-and-forget. The request continues immediately."""
     def _send():
@@ -103,19 +95,6 @@ def send_mail_with_timeout(msg, timeout=12):
 
 
 # ================= DATABASE CONNECTION (POOL, ONE CONNECTION PER REQUEST) ================= #
-# WHY THIS CHANGED:
-# The old code used ONE global connection + ONE global cursor shared by every
-# request. The booking page fires several AJAX calls at the same moment
-# (/api/get_districts, /api/get_cities, /api/get_hospitals_by_location ...).
-# Flask's dev server is multi-threaded, so those calls used the same cursor
-# at the same time and overwrote each other's results. That is what made the
-# City dropdown randomly stay disabled / empty.
-#
-# Now every request gets its OWN connection from a small pool, and hands it
-# back automatically when the request ends. The rest of the code still uses
-# the names `db` and `cursor` exactly as before - they are proxies that point
-# to the current request's connection / cursor.
-
 DB_CONFIG = dict(
     host=os.getenv("DB_HOST"),
     port=int(os.getenv("DB_PORT")),
@@ -141,8 +120,6 @@ def _get_conn():
     if conn is None:
         conn = db_pool.get_connection()
 
-        # Aiven (and most cloud MySQL) closes idle connections after a
-        # while, so ping/reconnect before using it.
         try:
             conn.ping(reconnect=True, attempts=3, delay=2)
         except mysql.connector.Error as e:
@@ -196,11 +173,6 @@ def close_db_connection(exc=None):
 
 
 # ================= DEBUG LOGGER (booking flow) ================= #
-# Prints one line per request for the booking pages so we can see exactly
-# what the server answered: 302 -> redirected, 200 -> same page re-rendered.
-# (FIX: a duplicate stub of the /download_slip route used to sit here and
-#  caused "View function mapping is overwriting an existing endpoint
-#  function: download_slip". The real route is further below.)
 @app.after_request
 def log_booking_flow(response):
     if request.path in ("/book_appointment", "/appointment_success"):
@@ -220,7 +192,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# ================= ADMIN PROFILE PICTURE UPLOAD CONFIG ================= #
+# ================= PROFILE PICTURE UPLOAD CONFIG ================= #
 PROFILE_UPLOAD_FOLDER = os.path.join("static", "uploads", "profile_pictures")
 ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg"}
 os.makedirs(PROFILE_UPLOAD_FOLDER, exist_ok=True)
@@ -228,6 +200,26 @@ os.makedirs(PROFILE_UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_image(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
+
+
+def upload_profile_image_to_cloudinary(file, public_id):
+    """Uploads a profile picture to Cloudinary and returns its https URL.
+    (Local disk on Render is wiped on every restart, which is why the
+    profile photo used to turn into a broken image icon.)
+    Returns (url, error_message)."""
+    try:
+        result = cloudinary.uploader.upload(
+            file,
+            resource_type="image",
+            folder="profile_pictures",
+            public_id=public_id,
+            overwrite=True
+        )
+        return result["secure_url"], None
+    except Exception as e:
+        print("Profile image upload error :", e)
+        traceback.print_exc()
+        return None, str(e)
 
 
 # ================= HOME PAGE ================= #
@@ -353,9 +345,6 @@ def doctor_register():
         if cursor.fetchone():
             return "\u274c Username already exists"
 
-        # FIX: doctor_id is now generated here in Python (e.g. "KAT001"-style
-        # prefix + number) instead of relying on a MySQL trigger. The trigger
-        # was missing on the Aiven DB, so "" was being saved as the ID.
         new_doctor_id = generate_doctor_id(full_name, hospital_city)
 
         sql = """
@@ -990,8 +979,6 @@ def add_lab_report(appointment_id):
         elif not allowed_file(file.filename):
             flash("Only PDF files are allowed.", "danger")
         else:
-            # Uploaded to Cloudinary instead of local disk so the file
-            # survives Render restarts/redeploys (local disk is ephemeral).
             public_id = secure_filename(f"{appointment['patient_id']}_{test_code}")
             upload_result = cloudinary.uploader.upload(
                 file,
@@ -1168,9 +1155,6 @@ def admin_register():
     if cursor.fetchone():
         return "\u274c Employee ID already exists"
 
-    # FIX: admin_id is now generated here in Python instead of relying on
-    # a MySQL trigger (the trigger may be missing on the Aiven DB, which
-    # would save "" as the ID).
     new_admin_id = generate_admin_id(full_name, city)
 
     sql = """
@@ -1268,10 +1252,6 @@ def admin_dashboard():
     )
 
 # ================= ADMIN PATIENT PROFILE (VIEW + EDIT) ================= #
-# This page also handles action="update" so the admin can edit the
-# patient's details inline (Edit Profile button on the page).
-# FIX: every form field is now read with .get() so a missing field can
-# never crash the route with BadRequestKeyError again.
 @app.route("/admin_patient", methods=["GET", "POST"])
 def admin_patient():
 
@@ -1312,7 +1292,6 @@ def admin_patient():
                 edit_open = True
 
             else:
-                # email must stay unique across the OTHER patients
                 cursor.execute("""
                     SELECT patient_id FROM patient
                     WHERE email=%s AND patient_id!=%s
@@ -1359,7 +1338,6 @@ def admin_patient():
 
                     flash("Patient Details Updated Successfully!", "success")
 
-            # reload the patient (by ID only - the name may have just changed)
             cursor.execute(
                 "SELECT * FROM patient WHERE patient_id=%s",
                 (patient_id,)
@@ -1420,8 +1398,6 @@ def admin_patient():
     )
 
 # ================= ADMIN EDIT PATIENT PROFILE ================= #
-# (Older separate-page version. The inline Edit Profile button on
-#  /admin_patient does the same job now, so this route is optional.)
 # patient_id is a text ID like "RAAP01", so this must NOT use <int:...>
 @app.route("/admin_edit_patient/<patient_id>", methods=["GET", "POST"])
 def admin_edit_patient(patient_id):
@@ -1441,23 +1417,24 @@ def admin_edit_patient(patient_id):
 
     if request.method == "POST":
 
-        full_name = request.form["full_name"]
-        email = request.form["email"]
-        mobile = request.form["mobile"]
-        dob = request.form["dob"]
-        gender = request.form["gender"]
-        blood_group = request.form["blood_group"]
+        # FIX: .get() instead of request.form[...] so a missing field can
+        # never throw "400 Bad Request" again.
+        full_name = request.form.get("full_name", "").strip()
+        email = request.form.get("email", "").strip()
+        mobile = request.form.get("mobile", "").strip()
+        dob = request.form.get("dob", "").strip() or None
+        gender = request.form.get("gender", "").strip()
+        blood_group = request.form.get("blood_group", "").strip()
 
-        address = request.form["address"]
-        city = request.form["city"]
-        district = request.form["district"]
-        state = request.form["state"]
-        pincode = request.form["pincode"]
+        address = build_address(request.form)
+        city = request.form.get("city", "").strip()
+        district = request.form.get("district", "").strip()
+        state = request.form.get("state", "").strip()
+        pincode = request.form.get("pincode", "").strip()
 
-        emergency_name = request.form["emergency_name"]
-        emergency_phone = request.form["emergency_phone"]
+        emergency_name = request.form.get("emergency_name", "").strip()
+        emergency_phone = request.form.get("emergency_phone", "").strip()
 
-        # email must stay unique across other patients
         cursor.execute("""
             SELECT patient_id FROM patient
             WHERE email=%s AND patient_id!=%s
@@ -1622,7 +1599,7 @@ def admin_appointments():
         doctor_stats=doctor_stats
     )
 # ================= ADMIN EDIT DOCTOR ================= #
-# doctor_id is now a text ID like "RASI01", so this must NOT use <int:...>
+# doctor_id is a text ID like "RASI01", so this must NOT use <int:...>
 @app.route("/admin_doctor_edit/<doctor_id>", methods=["GET", "POST"])
 def admin_doctor_edit(doctor_id):
 
@@ -1742,9 +1719,6 @@ def admin_lab_reports():
                 elif not allowed_file(file.filename):
                     flash("Only PDF files are allowed.", "danger")
                 else:
-                    # Uploaded to Cloudinary instead of local disk so the
-                    # file survives Render restarts/redeploys (local disk
-                    # on Render's free tier is ephemeral and gets wiped).
                     public_id = secure_filename(f"{patient_id}_{test_code}")
                     upload_result = cloudinary.uploader.upload(
                         file,
@@ -1998,9 +1972,6 @@ def patient_register():
     if cursor.fetchone():
         return "\u274c Username already exists."
 
-    # NEW: generate the custom patient_id (e.g. "RAAP01") from the
-    # patient's name + city, instead of relying on auto-increment
-    # (hospital is no longer collected at registration time).
     new_patient_id = generate_patient_id(full_name, city)
 
     sql = """
@@ -2092,11 +2063,6 @@ TAMIL_NADU_DISTRICTS = [
 
 @app.route("/api/get_districts")
 def get_districts():
-    # FIX: earlier this returned ALL 38 Tamil Nadu districts. Most of them
-    # have no registered hospital, so after choosing one the City box was
-    # disabled with "No hospitals registered here yet" and looked "paused".
-    # Now only districts that really have a doctor/hospital registered are
-    # listed, so the City dropdown always has something to show.
 
     cursor.execute("""
         SELECT DISTINCT hospital_district
@@ -2106,8 +2072,6 @@ def get_districts():
 
     db_districts = [row["hospital_district"] for row in cursor.fetchall()]
 
-    # Use the standard spelling from the list above when it matches
-    # (case-insensitive), so "vellore" and "Vellore" don't show twice.
     canonical = {d.lower(): d for d in TAMIL_NADU_DISTRICTS}
     found = {}
 
@@ -2115,7 +2079,6 @@ def get_districts():
         clean = d.strip()
         found[clean.lower()] = canonical.get(clean.lower(), clean)
 
-    # Nothing registered yet -> fall back to the full list
     if not found:
         return jsonify(sorted(TAMIL_NADU_DISTRICTS))
 
@@ -2133,7 +2096,6 @@ def get_cities(district):
         ORDER BY hospital_city
     """, (district,))
 
-    # remove duplicates that only differ by upper/lower case
     seen = {}
     for row in cursor.fetchall():
         city = row["hospital_city"]
@@ -2255,7 +2217,6 @@ def lab_reports():
     )
 
 #===============doctor lab reports===========#
-# patient_id is now a text ID like "RAAP01", so this must NOT use <int:...>
 @app.route("/doctor_lab_reports/<patient_id>")
 def doctor_lab_reports(patient_id):
 
@@ -2343,9 +2304,6 @@ def book_appointment():
     if patient is None:
         return "Patient not found"
 
-    # ALWAYS send the full doctor list to the page. The JavaScript in the
-    # template filters it by hospital / department, so the server must not
-    # shrink it (that was leaving the dropdown empty after a failed submit).
     cursor.execute("""
         SELECT
             doctor_id,
@@ -2377,7 +2335,6 @@ def book_appointment():
 
         suggested_department = suggest_department(reason)
 
-        # ---------- validation: show a message instead of silently reloading ----------
         error = None
         appointment_time = None
 
@@ -2426,11 +2383,9 @@ def book_appointment():
                 form_reason=form_reason
             )
 
-        # if the patient left the hospital box empty, use the doctor's hospital
         if not hospital_name:
             hospital_name = doctor.get("hospital_name") or ""
 
-        # ---------- save appointment ----------
         appointment_id = None
 
         try:
@@ -2461,7 +2416,6 @@ def book_appointment():
 
             appointment_id = cursor.lastrowid
 
-            # lastrowid can be 0 / None in some setups -> look the row up
             if not appointment_id:
                 cursor.execute("""
                     SELECT MAX(appointment_id) AS last_id
@@ -2472,7 +2426,6 @@ def book_appointment():
                 appointment_id = row["last_id"] if row else None
 
         except Exception as e:
-            # Print the FULL error in the terminal AND show it on the page
             print("Appointment Insert Error :", e)
             traceback.print_exc()
             flash("Could not book the appointment: " + str(e), "danger")
@@ -2485,7 +2438,6 @@ def book_appointment():
                 form_reason=form_reason
             )
 
-        # ---------- emails (background, never block the booking) ----------
         try:
             if doctor.get("email"):
 
@@ -2616,10 +2568,6 @@ def suggest_department(reason):
 # ============================================================
 # CUSTOM ID GENERATORS (patient / doctor / admin)
 # ============================================================
-# Builds an ID like "RAAP01" -> first 2 letters of the name
-# + first 2 letters of the city + a running 2-digit number
-# for that exact prefix (so different name/city combos each start
-# their own count from 01).
 
 def generate_patient_id(full_name, city):
 
@@ -2653,9 +2601,6 @@ def generate_patient_id(full_name, city):
 
 
 def generate_doctor_id(full_name, hospital_city):
-    """Same format as the patient ID (e.g. KAT001 style prefix + number),
-    built from the doctor's name + hospital city. Replaces the MySQL
-    trigger `before_doctor_insert`, which does not exist on the Aiven DB."""
 
     name_part = (re.sub(r'[^A-Za-z]', '', full_name or "")[:2] or "XX").upper()
     city_part = (re.sub(r'[^A-Za-z]', '', hospital_city or "")[:2] or "XX").upper()
@@ -2671,8 +2616,6 @@ def generate_doctor_id(full_name, hospital_city):
 
 
 def generate_admin_id(full_name, city):
-    """Same format as the doctor/patient ID (e.g. RACH01), built from the
-    admin's name + city. Replaces the MySQL trigger `before_admin_insert`."""
 
     name_part = (re.sub(r'[^A-Za-z]', '', full_name or "")[:2] or "XX").upper()
     city_part = (re.sub(r'[^A-Za-z]', '', city or "")[:2] or "XX").upper()
@@ -2697,8 +2640,6 @@ def appointment_success():
 
     appointment_id = request.args.get("appointment_id", type=int)
 
-    # If the id is missing, take the patient's latest appointment so
-    # the page never breaks.
     if not appointment_id:
         cursor.execute("""
             SELECT MAX(appointment_id) AS last_id
@@ -2751,7 +2692,6 @@ from datetime import datetime
 @app.route("/download_slip/<int:appointment_id>")
 def download_slip(appointment_id):
 
-    # Only a logged-in patient or doctor can download a slip
     if "patient_id" not in session and "doctor_id" not in session:
         return redirect(url_for("login"))
 
@@ -2789,7 +2729,6 @@ def download_slip(appointment_id):
     hospital_name = appointment.get("hospital_name") or "Hospital Not Assigned"
     status = str(appointment.get("status") or "Pending")
 
-    # Status colours (mirrors typical hospital slip conventions)
     status_colors = {
         "Approved": HexColor("#1e9e5a"),
         "Pending": HexColor("#c98a10"),
@@ -2813,12 +2752,10 @@ def download_slip(appointment_id):
     text_dark = HexColor("#1a1a1a")
     text_muted = HexColor("#5a6b75")
 
-    # ---------- Outer page border ----------
     pdf.setStrokeColor(border_gray)
     pdf.setLineWidth(1)
     pdf.rect(margin - 15, margin - 15, content_w + 30, page_h - (2 * margin) + 30)
 
-    # ---------- Header band ----------
     header_h = 90
     header_top = page_h - margin
     pdf.setFillColor(navy)
@@ -2850,7 +2787,6 @@ def download_slip(appointment_id):
     pdf.setFillColor(HexColor("#d6ecf5"))
     pdf.drawString(text_x, header_top - 52, "Electronic Medical Record System")
 
-    # Slip number / QR-less reference block, top-right of header
     pdf.setFont("Helvetica-Bold", 10)
     pdf.setFillColor(HexColor("#ffffff"))
     pdf.drawRightString(margin + content_w - 20, header_top - 35, "APPOINTMENT SLIP")
@@ -2867,7 +2803,6 @@ def download_slip(appointment_id):
         f"Issued: {datetime.now().strftime('%d %b %Y, %I:%M %p')}"
     )
 
-    # ---------- Status ribbon ----------
     ribbon_y = header_top - header_h - 28
     pdf.setFillColor(status_color)
     pdf.roundRect(margin + content_w - 140, ribbon_y - 4, 140, 24, 4, fill=1, stroke=0)
@@ -2879,7 +2814,6 @@ def download_slip(appointment_id):
     pdf.setFont("Helvetica-Bold", 13)
     pdf.drawString(margin + 20, ribbon_y + 3, "Patient Appointment Confirmation")
 
-    # ---------- Info panel ----------
     panel_top = ribbon_y - 25
     panel_h = 175
     pdf.setFillColor(light_bg)
@@ -2918,7 +2852,6 @@ def download_slip(appointment_id):
     pdf.setStrokeColor(border_gray)
     pdf.line(margin + 20, y + 12, margin + content_w - 20, y + 12)
 
-    # ---------- Reason box ----------
     reason_top = panel_top - panel_h - 20
     reason_h = 70
     pdf.setStrokeColor(border_gray)
@@ -2932,7 +2865,6 @@ def download_slip(appointment_id):
     pdf.setFont("Helvetica", 11)
     pdf.setFillColor(text_dark)
     reason_text = str(appointment.get("reason") or "-")
-    # simple word-wrap so long reasons don't run off the page
     max_chars = 95
     lines = []
     words = reason_text.split()
@@ -2951,7 +2883,6 @@ def download_slip(appointment_id):
         pdf.drawString(margin + 20, ry, line)
         ry -= 15
 
-    # ---------- Instructions ----------
     instr_top = reason_top - reason_h - 25
     pdf.setFont("Helvetica-Bold", 10)
     pdf.setFillColor(accent)
@@ -2969,7 +2900,6 @@ def download_slip(appointment_id):
         pdf.drawString(margin, iy, line)
         iy -= 16
 
-    # ---------- Signature block ----------
     sig_y = iy - 35
     pdf.setStrokeColor(text_muted)
     pdf.line(margin + content_w - 200, sig_y, margin + content_w - 20, sig_y)
@@ -2977,7 +2907,6 @@ def download_slip(appointment_id):
     pdf.setFillColor(text_muted)
     pdf.drawCentredString(margin + content_w - 110, sig_y - 12, "Authorized Signature / Hospital Seal")
 
-    # ---------- Footer ----------
     footer_y = margin
     pdf.setStrokeColor(border_gray)
     pdf.line(margin, footer_y + 22, margin + content_w, footer_y + 22)
@@ -3000,49 +2929,115 @@ def download_slip(appointment_id):
         mimetype="application/pdf"
     )
 
-# ================= EDIT PATIENT PROFILE (FIXED) ================= #
-# FIX: this route used to crash with "Internal Server Error" when you
-# clicked "Edit Patient". Causes handled now:
-#   1. every form field is read with .get() (no BadRequestKeyError)
-#   2. an empty DOB is saved as NULL instead of "" (MySQL rejects "")
-#   3. if edit_patient_profile.html is missing on the server (Linux /
-#      Render is CASE-SENSITIVE, unlike Windows) we fall back to the
-#      working patient_settings.html page instead of crashing
-#   4. any other error is printed with the full traceback in the Render
-#      logs and the user is sent back to the dashboard with a message
+
+# ============================================================
+# PATIENT PROFILE EDIT  (FIXED)
+# ============================================================
+# WHAT WAS WRONG
+# 1. "Edit Patient" button -> /edit_patient_profile -> Internal Server
+#    Error (that page/template was out of date with the data).
+#    FIX: the button now simply opens the Settings page, which already
+#    has the complete edit form.
+# 2. Settings "Save Changes" -> "400 Bad Request".
+#    The Settings form has "House No." and "Street" boxes, but the code
+#    read request.form["address"] - that field does not exist, so Flask
+#    threw 400. FIX: every field is read with .get(), and the address is
+#    built from address OR house_no + street.
+# 3. Profile photo showed a broken image after some time, because it was
+#    saved on Render's temporary disk. FIX: photo is uploaded to Cloudinary.
+
+def build_address(form):
+    """Returns the address from either a single 'address' box or from
+    separate House No. + Street boxes (whatever the form sends)."""
+    address = (form.get("address") or "").strip()
+
+    if address:
+        return address
+
+    parts = [
+        (form.get("house_no") or form.get("house") or form.get("door_no") or "").strip(),
+        (form.get("street") or "").strip()
+    ]
+
+    return ", ".join(p for p in parts if p)
+
+
+def clean_date(value):
+    """Accepts 2006-12-06 or 06/12/2006 or 06-12-2006 and returns
+    YYYY-MM-DD (what MySQL wants). Empty / invalid -> None."""
+    value = (value or "").strip()
+
+    if not value:
+        return None
+
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y"):
+        try:
+            return datetime.strptime(value, fmt).strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+
+    return None
+
+
 @app.route("/edit_patient_profile", methods=["GET", "POST"])
 def edit_patient_profile():
 
     if "patient_id" not in session:
         return redirect(url_for("patient_login"))
 
+    # Old page removed - the Settings page does the same job.
+    return redirect(url_for("patient_settings"))
+
+
+# ================= PATIENT SETTINGS (VIEW / EDIT PROFILE + PROFILE PICTURE) ================= #
+
+@app.route("/patient_settings", methods=["GET", "POST"])
+def patient_settings():
+
+    if "patient_id" not in session:
+        return redirect(url_for("patient_login"))
+
     patient_id = session["patient_id"]
 
-    try:
+    if request.method == "POST":
 
-        if request.method == "POST":
+        try:
+            cursor.execute(
+                "SELECT * FROM patient WHERE patient_id=%s",
+                (patient_id,)
+            )
+            current = cursor.fetchone()
 
-            f = request.form
+            if not current:
+                session.clear()
+                return redirect(url_for("patient_login"))
 
-            full_name = f.get("full_name", "").strip()
-            email = f.get("email", "").strip()
-            mobile = f.get("mobile", "").strip()
-            dob = f.get("dob", "").strip() or None
-            gender = f.get("gender", "").strip()
-            blood_group = f.get("blood_group", "").strip()
+            # Every field uses .get(); if a box is missing/empty the old
+            # value is kept, so the page can never crash with 400.
+            def val(name):
+                v = request.form.get(name)
+                if v is None:
+                    return current.get(name)
+                return v.strip()
 
-            address = f.get("address", "").strip()
-            city = f.get("city", "").strip()
-            district = f.get("district", "").strip()
-            state = f.get("state", "").strip()
-            pincode = f.get("pincode", "").strip()
+            full_name = val("full_name") or current["full_name"]
+            email = val("email") or current["email"]
+            mobile = val("mobile") or current["mobile"]
 
-            emergency_name = f.get("emergency_name", "").strip()
-            emergency_phone = f.get("emergency_phone", "").strip()
+            dob_raw = request.form.get("dob")
+            dob = clean_date(dob_raw) if dob_raw else current.get("dob")
 
-            if not full_name or not email or not mobile:
-                flash("Name, email and mobile are required.", "danger")
-                return redirect(url_for("edit_patient_profile"))
+            gender = val("gender")
+            blood_group = val("blood_group")
+
+            address = build_address(request.form) or current.get("address")
+            city = val("city")
+            district = val("district")
+            state = val("state")
+            pincode = val("pincode")
+
+            emergency_name = val("emergency_name")
+            emergency_phone = val("emergency_phone")
 
             # email must stay unique across the OTHER patients
             cursor.execute("""
@@ -3052,7 +3047,24 @@ def edit_patient_profile():
 
             if cursor.fetchone():
                 flash("This email is already used by another patient.", "danger")
-                return redirect(url_for("edit_patient_profile"))
+                return redirect(url_for("patient_settings"))
+
+            profile_image = current.get("profile_image")
+
+            file = request.files.get("profile_image")
+
+            if file and file.filename != "":
+                if allowed_image(file.filename):
+                    new_url, err = upload_profile_image_to_cloudinary(
+                        file,
+                        secure_filename(f"patient_{patient_id}")
+                    )
+                    if new_url:
+                        profile_image = new_url
+                    else:
+                        flash("Photo upload failed: " + str(err), "danger")
+                else:
+                    flash("Only PNG / JPG / JPEG images are allowed for the profile picture.", "danger")
 
             cursor.execute("""
                 UPDATE patient
@@ -3069,7 +3081,8 @@ def edit_patient_profile():
                     state=%s,
                     pincode=%s,
                     emergency_name=%s,
-                    emergency_phone=%s
+                    emergency_phone=%s,
+                    profile_image=%s
                 WHERE patient_id=%s
             """, (
                 full_name,
@@ -3085,6 +3098,7 @@ def edit_patient_profile():
                 pincode,
                 emergency_name,
                 emergency_phone,
+                profile_image,
                 patient_id
             ))
 
@@ -3092,139 +3106,10 @@ def edit_patient_profile():
 
             flash("Profile Updated Successfully!", "success")
 
-            return redirect(url_for("patient_dashboard"))
-
-        # ---------- GET: open the edit page ----------
-        cursor.execute(
-            "SELECT * FROM patient WHERE patient_id=%s",
-            (patient_id,)
-        )
-
-        patient_data = cursor.fetchone()
-
-        if patient_data is None:
-            session.clear()
-            return redirect(url_for("patient_login"))
-
-        try:
-            return render_template(
-                "edit_patient_profile.html",
-                patient=patient_data
-            )
-        except TemplateNotFound:
-            print("!!! edit_patient_profile.html NOT FOUND on server "
-                  "(check file name / upper-lower case). Using patient_settings.html")
-            return render_template(
-                "patient_settings.html",
-                patient=patient_data
-            )
-
-    except Exception as e:
-        print("Edit Patient Profile Error :", e)
-        traceback.print_exc()
-        flash("Could not open / save the profile: " + str(e), "danger")
-        return redirect(url_for("patient_dashboard"))
-
-
-# ================= PATIENT SETTINGS (VIEW / EDIT PROFILE + PROFILE PICTURE) ================= #
-
-@app.route("/patient_settings", methods=["GET", "POST"])
-def patient_settings():
-
-    if "patient_id" not in session:
-        return redirect(url_for("patient_login"))
-
-    patient_id = session["patient_id"]
-
-    if request.method == "POST":
-
-        full_name = request.form["full_name"]
-        email = request.form["email"]
-        mobile = request.form["mobile"]
-        dob = request.form.get("dob", "").strip() or None
-        gender = request.form["gender"]
-        blood_group = request.form["blood_group"]
-
-        address = request.form["address"]
-        city = request.form["city"]
-        district = request.form["district"]
-        state = request.form["state"]
-        pincode = request.form["pincode"]
-
-        emergency_name = request.form["emergency_name"]
-        emergency_phone = request.form["emergency_phone"]
-
-        cursor.execute(
-            "SELECT profile_image FROM patient WHERE patient_id=%s",
-            (patient_id,)
-        )
-        current = cursor.fetchone()
-        profile_image = current["profile_image"] if current else None
-
-        file = request.files.get("profile_image")
-
-        if file and file.filename != "":
-            if allowed_image(file.filename):
-                # FIX: the photo is now uploaded to Cloudinary. Saving it on
-                # Render's local disk meant it vanished on every restart,
-                # which is why the profile picture showed as a broken image.
-                try:
-                    upload_result = cloudinary.uploader.upload(
-                        file,
-                        resource_type="image",
-                        folder="profile_pictures",
-                        public_id=secure_filename(f"patient_{patient_id}"),
-                        overwrite=True
-                    )
-                    profile_image = upload_result["secure_url"]
-                except Exception as e:
-                    print("Profile Image Upload Error :", e)
-                    traceback.print_exc()
-                    flash("Could not upload the profile picture. Please try again.", "danger")
-            else:
-                flash("Only PNG / JPG / JPEG images are allowed for the profile picture.", "danger")
-
-        cursor.execute("""
-            UPDATE patient
-            SET
-                full_name=%s,
-                email=%s,
-                mobile=%s,
-                dob=%s,
-                gender=%s,
-                blood_group=%s,
-                address=%s,
-                city=%s,
-                district=%s,
-                state=%s,
-                pincode=%s,
-                emergency_name=%s,
-                emergency_phone=%s,
-                profile_image=%s
-            WHERE patient_id=%s
-        """, (
-            full_name,
-            email,
-            mobile,
-            dob,
-            gender,
-            blood_group,
-            address,
-            city,
-            district,
-            state,
-            pincode,
-            emergency_name,
-            emergency_phone,
-            profile_image,
-            patient_id
-        ))
-
-        db.commit()
-
-        session["username"] = session.get("username")
-
-        flash("Profile Updated Successfully!", "success")
+        except Exception as e:
+            print("Patient settings save error :", e)
+            traceback.print_exc()
+            flash("Could not save your profile: " + str(e), "danger")
 
         return redirect(url_for("patient_settings"))
 
@@ -3493,26 +3378,11 @@ def reset_password():
         )
 
     return render_template("reset_password.html")
-# ================= ERROR HANDLERS ================= #
+# ================= ERROR HANDLER ================= #
 
 @app.errorhandler(404)
 def page_not_found(error):
     return "<h2>404 - Page Not Found</h2>", 404
-
-
-# NEW: any unhandled crash now prints the FULL traceback in the Render
-# logs (Logs tab), so you can see the exact line / file that failed
-# instead of only the generic "Internal Server Error" page.
-@app.errorhandler(500)
-def internal_error(error):
-    original = getattr(error, "original_exception", None) or error
-    print("!!! 500 ERROR on", request.method, request.path)
-    traceback.print_exception(type(original), original, original.__traceback__)
-    return (
-        "<h2>500 - Something went wrong</h2>"
-        "<p>The error has been logged. Please go back and try again.</p>",
-        500
-    )
 
 
 # ================= RUN APP ================= #
